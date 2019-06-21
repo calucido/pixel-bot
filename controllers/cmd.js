@@ -49,7 +49,7 @@ module.exports = app => {
         let today = new Date();
         models.Year.findOne({userId: message.from.username, year: today.getYear(), yearType}).then((year) => {
           // correct missing year
-          if (!year) {year = new models.Year({userId: message.from.username, year: today.getYear(), yearType}); year.save(e => {if (e) { throw new Error(e); }}););}
+          if (!year) {year = new models.Year({userId: message.from.username, year: today.getYear(), yearType}); year.save(e => {if (e) { throw new Error(e); }});}
 
           // correct missed months/days
           while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
@@ -67,7 +67,7 @@ module.exports = app => {
               if (e) {
                 throw new Error(e);
               }
-              year.save((e => {if (e) { throw new Error(e); }}););}
+              year.save(e => {if (e) { throw new Error(e); }});
             });
           } else {
             year.content[today.getMonth()].push(color);
@@ -75,7 +75,7 @@ module.exports = app => {
               if (e) {
                 throw new Error(e);
               }
-              year.save((e => {if (e) { throw new Error(e); }}););}
+              year.save(e => {if (e) { throw new Error(e); }});
             });
           }
         }).catch(e => {throw new Error(e)});
