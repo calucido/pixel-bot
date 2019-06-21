@@ -3,6 +3,9 @@ const request = require('request')
      , packageJSON = require('../package.json');
 
 const send = (to, message, callback) => {
+  if (to !== '379133893') {
+     message = "Hey! You're not my developer. Get out of here (for now)!"
+  }
   const options = {
     url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendMessage?chat_id=${to}&text=${encodeURIComponent(message)}&parse_mode=markdown`,
     headers: {
