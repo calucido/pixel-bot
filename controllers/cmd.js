@@ -27,7 +27,7 @@ module.exports = app => {
     if (message.text.match(/^\/start/i) {
       models.User.findOne({userId: message.from.username}).then((e, user) => {
         if (e) { throw new Error(e); }
-        if (results.length) {
+        if (user) {
           return send(message.chat.id, "I already know you!", e => {
             if (e) {
               throw new Error(e);
