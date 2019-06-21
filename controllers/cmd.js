@@ -24,7 +24,7 @@ const send = (to, message, callback) => {
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
-    if (message.text.match(/^\/start/i) {
+    if (message.text.match(/^\/start/)) {
       models.User.findOne({userId: message.from.username}).then((e, user) => {
         if (e) { throw new Error(e); }
         if (user) {
@@ -35,8 +35,13 @@ module.exports = app => {
           });
         }
 
-        let user = new models.User({userId: message.from.username})
+        user = new models.User({userId: message.from.username})
         user.save(e => {if (e) { throw new Error(e); }});
+        send(message.chat.id, 'sup bud', e => {
+          if (e) {
+            throw new Error(e);
+          }
+        });
       });
     }
     models.User.findOne({userId: message.from.username}).then((e, user) => {
