@@ -20,17 +20,20 @@ const send = (to, message, callback) => {
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
-    console.log(message.text)
+    console.log(message)
     const commands = {
       'today': (callback) => {
-        return callback("today");
+        return callback('today');
       },
       'colors': (callback) => {
-        return callback("colors");
+        return callback('colors');
+      },
+      '/start': (callback) => {
+        returncallback('get over yourself');
       }
     };
     commands[message.text](answer => {
-      send(message.from, answer, e => {
+      send(message.chat.id, answer, e => {
         if (e) {
           throw new Error(e);
         }
