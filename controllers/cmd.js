@@ -1,0 +1,38 @@
+"use strict";
+const request = require('request');
+
+const send = (to, message, callback) => {
+  const options = {
+    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendMessage?chat_id=${to}&text=${encodeURIComponent(message)}&parse_mode=markdown`,
+    headers: {
+      'User-Agent': `DailyPixelBot/${packageJSON.version}`
+    }
+  };
+  request.get(options, (e, response, body) => {
+    if (body.ok === false) {
+      e = body.description;
+    }
+    return callback(e);
+  });
+};
+module.exports = app => {
+  app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
+    const message = req.body.message;
+    const commands = {
+      'today': (callback) => {
+        return callback("today");
+      },
+      'colors': (callback) => {
+        return callback("colors");
+      }
+    };
+    commands[message.text](answer => {
+      send(message.from, answer, e => {
+        if (e) {
+          throw new Error(e);
+        }
+      });
+    });
+    res.sendStatus(200);
+  });
+}
