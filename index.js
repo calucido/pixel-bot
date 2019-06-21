@@ -1,8 +1,6 @@
 "use strict";
 
 const express = require('express')
-//  , mongoSessionStore = require('connect-mongo')(session)
-//  , mongoose = require('mongoose')
   , bodyParser = require('body-parser')
   , app = express();
 
