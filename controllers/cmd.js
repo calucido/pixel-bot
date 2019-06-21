@@ -29,16 +29,25 @@ module.exports = app => {
         return callback('colors');
       },
       '/start': (callback) => {
-        returncallback('get over yourself');
+        return callback('get over yourself');
       }
     };
-    commands[message.text](answer => {
-      send(message.chat.id, answer, e => {
+    try {
+      commands[message.text](answer => {
+        send(message.chat.id, answer, e => {
+          if (e) {
+            throw new Error(e);
+          }
+        });
+      });
+    }
+    catch (e) {
+      send(message.chat.id, "what", e => {
         if (e) {
           throw new Error(e);
         }
       });
-    });
+    }
     res.sendStatus(200);
   });
 }
