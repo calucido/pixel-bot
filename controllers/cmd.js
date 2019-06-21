@@ -48,9 +48,9 @@ module.exports = app => {
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
         let today = new Date();
-        models.Year.findOne({userId: message.from.username, year: today.getYear(), yearType}).then((year) => {
+        models.Year.findOne({userId: message.from.username, year: today.getFullYear(), yearType}).then((year) => {
           // correct missing year
-          if (!year) {year = new models.Year({userId: message.from.username, year: today.getYear(), yearType}); year.save(e => {if (e) { throw new Error(e); }});}
+          if (!year) {year = new models.Year({userId: message.from.username, year: today.getFullYear(), yearType}); year.save(e => {if (e) { throw new Error(e); }});}
 
           // correct missed months/days
           while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
@@ -64,7 +64,7 @@ module.exports = app => {
           let color = message.text.replace(yearType, '').replace(/ */, '').toLowerCase();
           if (year.content[today.getMonth()][today.getDate() - 1]) {
             year.content[today.getMonth()][today.getDate() - 1] = color;
-            return send(message.chat.id, `Overwrote ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+            return send(message.chat.id, `Overwrote ${yearType} mood for ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
@@ -72,7 +72,7 @@ module.exports = app => {
             });
           } else {
             year.content[today.getMonth()].push(color);
-            return send(message.chat.id, `Added ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+            return send(message.chat.id, `Added ${yearType} mood for ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
