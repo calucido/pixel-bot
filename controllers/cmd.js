@@ -24,70 +24,58 @@ const send = (to, message, callback) => {
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
-    let user = await models.User.findOne({userId: message.chat.id});
+    models.User.findOne({userId: message.chat.id}).then((e, user) => {
+      if (e) { throw new Error(e) }
+      if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
+        let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
+        let today = new Date();
+        models.Year.findOne({userId: message.chat.id, year: today.getYear(), yearType}, (e, year) => {
 
-    console.log(message)
-    const commands = {
-      'today': (callback) => {
-        
-        return callback('today');
-      },
-      'colors': (callback) => {
-        return callback('colors');
-      },
-      '/start': (callback) => {
-        return callback('get over yourself');
-      }
-    };
-
-    if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
-      let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
-      let today = new Date();
-      let year = await models.Year.findOne({userId: message.chat.id, year: today.getYear(), yearType});
-
-      // correct missed months/days
-      while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
-        year.content.push([]);
-      }
-      while (year.content[today.getMonth()].length < (today.getDate() - 1)) {  // today.getDate() returns the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
-        year.content[today.getMonth()].push('');
-      }
-
-      // check whether today has already been defined, and then set
-      let color = message.text.replace(yearType, '').replace(/ */, '').toLowerCase();
-      if (year.content[today.getMonth()][today.getDate() - 1]) {
-        year.content[today.getMonth()][today.getDate() - 1]) = color;
-        send(message.chat.id, `Overwrote ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+          // correct missed months/days
+          while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
+            year.content.push([]);
+          }
+          while (year.content[today.getMonth()].length < (today.getDate() - 1)) {  // today.getDate() returns the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
+            year.content[today.getMonth()].push('');
+          }
+    
+          // check whether today has already been defined, and then set
+          let color = message.text.replace(yearType, '').replace(/ */, '').toLowerCase();
+          if (year.content[today.getMonth()][today.getDate() - 1]) {
+            year.content[today.getMonth()][today.getDate() - 1] = color;
+            send(message.chat.id, `Overwrote ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+              if (e) {
+                throw new Error(e);
+              }
+            });
+          } else {
+            year.content[today.getMonth()].push(color);
+            send(message.chat.id, `Added ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+              if (e) {
+                throw new Error(e);
+              }
+            });
+          }
+        });
+      } else if (message.text.match(/^colors/i)) { // see if they're asking for their color list
+        let colors = '';
+        for (let i = 0; i<user.colors.length; i++) {
+          colors += `${user.colors[i].name}: ${user.colors[i].mood}\n`
+        }
+        send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
           if (e) {
             throw new Error(e);
           }
         });
-      } else {
-        year.content[today.getMonth()].push(color);
-        send(message.chat.id, `Added ${yearType} mood for ${today.getYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+      } else {  // I have no idea what you're saying
+        send(message.chat.id, "what does that mean", e => {
           if (e) {
             throw new Error(e);
           }
         });
       }
-    } else if (message.text.match(/^colors/i) { // see if they're asking for their color list
-      let user = await models.User.findOne({userId: message.chat.id});
-      let colors = '';
-      for (let i = 0; i<user.colors.length; i++) {
-        colors += `${user.colors[i].name}: ${user.colors[i].mood}\n`
-      }
-      send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
-        if (e) {
-          throw new Error(e);
-        }
-      });
-    } else {  // I have no idea what you're saying
-      send(message.chat.id, "what does that mean", e => {
-        if (e) {
-          throw new Error(e);
-        }
-      });
-    }
-    res.sendStatus(200);
+
+      res.sendStatus(200);
+    });
   });
 }
