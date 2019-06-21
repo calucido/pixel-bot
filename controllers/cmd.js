@@ -4,7 +4,7 @@ const request = require('request')
     , models = require('../models');
 
 const send = (to, message, callback) => {
-  if (to !== '379133893') {
+  if (to != '379133893') {
      message = "Hey! You're not my developer. Get out of here (for now)!"
   }
   const options = {
@@ -25,8 +25,7 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
     if (message.text.match(/^\/start/)) {
-      models.User.findOne({userId: message.from.username}).then((e, user) => {
-        if (e) { throw new Error(e); }
+      models.User.findOne({userId: message.from.username}).then((user) => {
         if (user) {
           return send(message.chat.id, "I already know you!", e => {
             if (e) {
@@ -42,10 +41,9 @@ module.exports = app => {
             throw new Error(e);
           }
         });
-      });
+      }).catch(e => {throw new Error(e)});
     }
-    models.User.findOne({userId: message.from.username}).then((e, user) => {
-      if (e) { throw new Error(e); }
+    models.User.findOne({userId: message.from.username}).then((user) => {
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
         let today = new Date();
@@ -76,7 +74,7 @@ module.exports = app => {
               }
             });
           }
-        });
+        }).catch(e => {throw new Error(e)});
       } else if (message.text.match(/^colors/i)) { // see if they're asking for their color list
         let colors = '';
         for (let i = 0; i<user.colors.length; i++) {
