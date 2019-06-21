@@ -24,12 +24,27 @@ const send = (to, message, callback) => {
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
-    models.User.findOne({userId: message.chat.id}).then((e, user) => {
-      if (e) { throw new Error(e) }
+    if (message.text.match(/^\/start/i) {
+      models.User.findOne({userId: message.from.username}).then((e, user) => {
+        if (e) { throw new Error(e); }
+        if (results.length) {
+          return send(message.chat.id, "I already know you!", e => {
+            if (e) {
+              throw new Error(e);
+            }
+          });
+        }
+
+        let user = new models.User({userId: message.from.username})
+        user.save(e => {if (e) { throw new Error(e); }});
+      });
+    }
+    models.User.findOne({userId: message.from.username}).then((e, user) => {
+      if (e) { throw new Error(e); }
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
         let today = new Date();
-        models.Year.findOne({userId: message.chat.id, year: today.getYear(), yearType}, (e, year) => {
+        models.Year.findOne({userId: message.from.username, year: today.getYear(), yearType}, (e, year) => {
 
           // correct missed months/days
           while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
