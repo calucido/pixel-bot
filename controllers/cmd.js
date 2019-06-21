@@ -23,6 +23,7 @@ const send = (to, message, callback) => {
 };
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
+    res.sendStatus(200);
     const message = req.body.message;
     if (message.text.match(/^\/start/)) {
       models.User.findOne({userId: message.from.username}).then((user) => {
@@ -96,8 +97,6 @@ module.exports = app => {
           }
         });
       }
-
-      res.sendStatus(200);
     });
   });
 }
