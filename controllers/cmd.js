@@ -1,5 +1,6 @@
 "use strict";
-const request = require('request');
+const request = require('request')
+     , packageJSON = require('../package.json');
 
 const send = (to, message, callback) => {
   const options = {
@@ -8,6 +9,7 @@ const send = (to, message, callback) => {
       'User-Agent': `DailyPixelBot/${packageJSON.version}`
     }
   };
+//  console.log(options);
   request.get(options, (e, response, body) => {
     if (body.ok === false) {
       e = body.description;
@@ -18,6 +20,7 @@ const send = (to, message, callback) => {
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
+    console.log(message.text)
     const commands = {
       'today': (callback) => {
         return callback("today");
