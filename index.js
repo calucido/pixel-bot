@@ -11,6 +11,6 @@ app.use(bodyParser.json());
 
 require('./controllers/cmd')(app);
 
-app.listen(8080, () => {
-  console.log('Running on port 8080.');
+app.listen(process.env.PORT, () => {
+  console.log(`Running on port ${process.env.PORT}.`);
 });
