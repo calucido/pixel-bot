@@ -1,5 +1,6 @@
 "use strict";
 const request = require('request')
+    , moment = require('moment')
     , packageJSON = require('../package.json')
     , models = require('../models');
 
@@ -47,32 +48,38 @@ module.exports = app => {
     models.User.findOne({userId: message.from.username}).then((user) => {
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
-        let today = new Date();
-        models.Year.findOne({userId: message.from.username, year: today.getFullYear(), yearType}).then((year) => {
+        let currentYear = moment().tz(user.timezone).format('YYYY');
+        let currentMonth = Number(moment().tz(user.timezone).format('MM'));
+        let currentDay = Number(moment().tz(user.timezone).format('DD'));
+
+        models.Year.findOne({userId: message.from.username, year: currentYear}).then((year) => {
           // correct missing year
-          if (!year) {year = new models.Year({userId: message.from.username, year: today.getFullYear(), yearType}); year.save(e => {if (e) { throw new Error(e); }});}
+          if (!year) {
+            year = new models.Year({userId: message.from.username, year: currentYear, yearType});
+            year.save(e => {if (e) { throw new Error(e); }});
+          }
 
           // correct missed months/days
-          while (year.content.length < (today.getMonth() + 1)) {  // today.getMonth() returns the array number of the month, which starts at 0; length returns a count, which starts at 1
+          while (year.content.length < currentMonth) {
             year.content.push([]);
           }
-          while (year.content[today.getMonth()].length < (today.getDate() - 1)) {  // today.getDate() returns the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
-            year.content[today.getMonth()].push('');
+          while (year.content[currentMonth].length < (currentDay - 1)) {  // currentDay stores the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
+            year.content[currentMonth].push('');
           }
     
-          // check whether today has already been defined, and then set
-          let color = message.text.replace(yearType, '').replace(/ */, '').toLowerCase();
-          if (year.content[today.getMonth()][today.getDate() - 1]) {
-            year.content[today.getMonth()][today.getDate() - 1] = color;
-            return send(message.chat.id, `Overwrote ${yearType} mood for ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+          // check whether today's mood has already been defined, and then set
+          let color = message.text.replace(/^(am)|(pm) */i, '').toLowerCase();
+          if (year.content[currentMonth][currentDay - 1]) {
+            year.content[currentMonth][currentDay - 1] = color;
+            return send(message.chat.id, `Overwrote ${yearType} mood for ${moment().tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
               year.save(e => {if (e) { throw new Error(e); }});
             });
           } else {
-            year.content[today.getMonth()].push(color);
-            return send(message.chat.id, `Added ${yearType} mood for ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()} as ${color}.`, e => {
+            year.content[currentMonth].push(color);
+            return send(message.chat.id, `Added ${yearType} mood for ${moment().tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
@@ -90,7 +97,12 @@ module.exports = app => {
             throw new Error(e);
           }
         });
-      } else {  // I have no idea what you're saying
+      } else if (message.text.match(/^color /i)) { // allow ppl to define colors
+        
+      } else if (moment.tz.zone(message.text)) {
+        user.timezone = message.text;
+        user.save(e => {if (e) { throw new Error(e); }});
+      } else  {  // I have no idea what you're saying
         return send(message.chat.id, "what does that mean", e => {
           if (e) {
             throw new Error(e);

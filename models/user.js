@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 
 const userSchema = new mongoose.Schema({
   userId: {type: String, index: true},
+  timezone: String,
   colors: [
     {name: String,
     hex: String,
