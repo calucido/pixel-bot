@@ -33,27 +33,19 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
     const message = req.body.message;
-    if (message.text.match(/^\/start/)) {
-      models.User.findOne({userId: message.from.username}).then((user) => {
+    
+    models.User.findOne({userId: message.from.username}).then((user) => {
+      if (message.text.match(/^\/start/)) {
         if (user) {
-          return send(message.chat.id, "I already know you!", e => {
-            if (e) {
-              throw new Error(e);
-            }
+          return send(message.chat.id, "I already know you!", handleError);
+        } else {
+          user = new models.User({userId: message.from.username})
+          user.save(e => {
+            if (e) { throw new Error(e); }
+            return send(message.chat.id, 'sup bud', handleError);
           });
         }
-
-        user = new models.User({userId: message.from.username})
-        user.save(e => {if (e) { throw new Error(e); }});
-        return send(message.chat.id, 'sup bud', e => {
-          if (e) {
-            throw new Error(e);
-          }
-        });
-      }).catch(e => {throw new Error(e)});
-    }
-    models.User.findOne({userId: message.from.username}).then((user) => {
-      if (message.text.match(/^am *|^pm */i)) { // see if it's a mood log "am" or "pm"
+      } else if (message.text.match(/^am *|^pm */i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^am|^pm/i)[0].toLowerCase();
         if (!user.timezone) {
           user.timezone = '';
@@ -81,23 +73,29 @@ module.exports = app => {
           let color = message.text.replace(/^am *|^pm */i, '').toLowerCase();
           if (year.content[currentMonth - 1][currentDay - 1]) {
             year.content[currentMonth - 1][currentDay - 1] = color;
-            console.log(year);
-            year.markModified('content');
-            year.save(e => {
-              if (e) { throw new Error(e); }
-              return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+            year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+            
+            // mark color as used if it isn't yet
+            let colorIndex = user.colors.findIndex(obj => {return obj.name === color;});
+            if (user.colors[colorIndex].used === false) { user.colors[colorIndex].used = true; }
+            
+            user.save(e => {
+             if (e) { throw new Error(e); } 
+             year.save(e => {
+                if (e) { throw new Error(e); }
+                return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+              });
             });
           } else {
             year.content[currentMonth - 1].push(color);
-            year.markModified('content');
-            console.log(year);
+            year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             year.save(e => {
               if (e) { throw new Error(e); }
               return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
             });
           }
         }).catch(e => {throw new Error(e)});
-      } else if (message.text.match(/^colors/i)) { // see if they're asking for their color list
+      } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
         let colors = '';
         for (let i = 0; i<user.colors.length; i++) {
           colors += `${user.colors[i].name}: ${user.colors[i].mood}\n`
@@ -107,8 +105,19 @@ module.exports = app => {
             throw new Error(e);
           }
         });
-      } else if (message.text.match(/^color /i)) { // allow ppl to define colors
-        
+      } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
+        let colorName = message.text.match(/^color *"(.*) *"/i).toLowerCase();
+        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/).toLowerCase();
+        let colorMood = message.text.match(/".*"$/i).toLowerCase();
+        if (!colorHex) {
+          return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
+        } else {
+          user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
+          user.save(e => {
+            if (e) { throw new Error(e); }
+            return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
+          });
+        }
       } else if (moment.tz.zone(message.text)) {
         user.timezone = message.text;
         user.save(e => {
