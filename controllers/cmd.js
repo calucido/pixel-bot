@@ -106,9 +106,9 @@ module.exports = app => {
           }
         });
       } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
-        let colorName = message.text.match(/^color *"(.*) *"/i).toLowerCase();
-        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/).toLowerCase();
-        let colorMood = message.text.match(/".*"$/i).toLowerCase();
+        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1].toLowerCase();
+        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1].toLowerCase();
+        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i)[1].toLowerCase();
         if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else {
