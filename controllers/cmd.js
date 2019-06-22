@@ -54,7 +54,7 @@ module.exports = app => {
     }
     models.User.findOne({userId: message.from.username}).then((user) => {
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
-        let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
+        let yearType = message.text.match(/^am *|^pm */i)[0].toLowerCase();
         if (!user.timezone) {
           user.timezone = '';
         }
@@ -78,7 +78,7 @@ module.exports = app => {
           }
     
           // check whether today's mood has already been defined, and then set
-          let color = message.text.replace(/^(am)|(pm) */i, '').toLowerCase();
+          let color = message.text.replace(/^am *|^pm */i, '').toLowerCase();
           if (year.content[currentMonth - 1][currentDay - 1]) {
             year.content[currentMonth - 1][currentDay - 1] = color;
             return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
