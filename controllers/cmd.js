@@ -45,7 +45,7 @@ module.exports = app => {
             return send(message.chat.id, 'sup bud', handleError);
           });
         }
-      } else if (message.text.match(/^am *|^pm */i)) { // see if it's a mood log "am" or "pm"
+      } else if (message.text.match(/^\/am *|^\/pm */i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^am|^pm/i)[0].toLowerCase();
         if (!user.timezone) {
           user.timezone = '';
@@ -97,9 +97,9 @@ module.exports = app => {
         }).catch(e => {throw new Error(e)});
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
         let colors = '';
-        for (let i = 0; i<user.colors.length; i++) {
-          colors += `${user.colors[i].name}: ${user.colors[i].mood}\n`
-        }
+        user.colors.forEach(color => {
+          colors += `${color.name} (${color.hex}): ${color.mood}\n`
+        });
         return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
           if (e) {
             throw new Error(e);
@@ -111,7 +111,9 @@ module.exports = app => {
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i)[1].toLowerCase();
         if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
-        } else {
+        } else if (!colorName || !colorMood) {
+          return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
+        } else  {
           user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
