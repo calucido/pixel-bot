@@ -82,12 +82,14 @@ module.exports = app => {
           if (year.content[currentMonth - 1][currentDay - 1]) {
             year.content[currentMonth - 1][currentDay - 1] = color;
             console.log(year);
+            year.markModified('content');
             year.save(e => {
               if (e) { throw new Error(e); }
               return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
             });
           } else {
             year.content[currentMonth - 1].push(color);
+            year.markModified('content');
             console.log(year);
             year.save(e => {
               if (e) { throw new Error(e); }
