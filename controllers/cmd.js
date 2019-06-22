@@ -1,6 +1,6 @@
 "use strict";
 const request = require('request')
-    , moment = require('moment')
+    , moment = require('moment-timezone')
     , packageJSON = require('../package.json')
     , models = require('../models');
 
