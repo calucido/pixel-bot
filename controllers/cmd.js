@@ -22,6 +22,13 @@ const send = (to, message, callback) => {
     return callback(e);
   });
 };
+
+const handleError = e => {
+  if (e) {
+    throw new Error(e);
+  }
+};
+
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
@@ -48,9 +55,12 @@ module.exports = app => {
     models.User.findOne({userId: message.from.username}).then((user) => {
       if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
         let yearType = message.text.match(/^(am)|(pm)/i)[0].toLowerCase();
-        let currentYear = moment().tz(user.timezone).format('YYYY');
-        let currentMonth = Number(moment().tz(user.timezone).format('MM'));
-        let currentDay = Number(moment().tz(user.timezone).format('DD'));
+        if (!user.timezone) {
+          user.timezone = '';
+        }
+        let currentYear = moment.tz(user.timezone).format('YYYY');
+        let currentMonth = Number(moment.tz(user.timezone).format('MM'));
+        let currentDay = Number(moment.tz(user.timezone).format('DD'));
 
         models.Year.findOne({userId: message.from.username, year: currentYear}).then((year) => {
           // correct missing year
@@ -71,7 +81,7 @@ module.exports = app => {
           let color = message.text.replace(/^(am)|(pm) */i, '').toLowerCase();
           if (year.content[currentMonth][currentDay - 1]) {
             year.content[currentMonth][currentDay - 1] = color;
-            return send(message.chat.id, `Overwrote ${yearType} mood for ${moment().tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
+            return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
@@ -79,7 +89,7 @@ module.exports = app => {
             });
           } else {
             year.content[currentMonth].push(color);
-            return send(message.chat.id, `Added ${yearType} mood for ${moment().tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
+            return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
               }
@@ -101,13 +111,12 @@ module.exports = app => {
         
       } else if (moment.tz.zone(message.text)) {
         user.timezone = message.text;
-        user.save(e => {if (e) { throw new Error(e); }});
-      } else  {  // I have no idea what you're saying
-        return send(message.chat.id, "what does that mean", e => {
-          if (e) {
-            throw new Error(e);
-          }
+        user.save(e => {
+          if (e) { throw new Error(e); }
+          return send(message.chat.id, `Set your timezone to ${user.timezone}.`, handleError);
         });
+      } else  {  // I have no idea what you're saying
+        return send(message.chat.id, "what does that mean", handleError);
       }
     });
   });
