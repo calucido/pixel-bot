@@ -46,7 +46,7 @@ module.exports = app => {
           });
         }
       } else if (message.text.match(/^\/am *|^\/pm */i)) { // see if it's a mood log "am" or "pm"
-        let yearType = message.text.match(/^am|^pm/i)[0].toLowerCase();
+        let yearType = message.text.match(/^\/(am)|^\/(pm)/i)[0].toLowerCase();
         if (!user.timezone) {
           user.timezone = '';
         }
