@@ -53,8 +53,8 @@ module.exports = app => {
       }).catch(e => {throw new Error(e)});
     }
     models.User.findOne({userId: message.from.username}).then((user) => {
-      if (message.text.match(/^(am)|(pm)/i)) { // see if it's a mood log "am" or "pm"
-        let yearType = message.text.match(/^am *|^pm */i)[0].toLowerCase();
+      if (message.text.match(/^am *|^pm */i)) { // see if it's a mood log "am" or "pm"
+        let yearType = message.text.match(/^am|^pm/i)[0].toLowerCase();
         if (!user.timezone) {
           user.timezone = '';
         }
@@ -81,19 +81,17 @@ module.exports = app => {
           let color = message.text.replace(/^am *|^pm */i, '').toLowerCase();
           if (year.content[currentMonth - 1][currentDay - 1]) {
             year.content[currentMonth - 1][currentDay - 1] = color;
-            return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
-              if (e) {
-                throw new Error(e);
-              }
-              year.save(e => {if (e) { throw new Error(e); }});
+            console.log(year);
+            year.save(e => {
+              if (e) { throw new Error(e); }
+              return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
             });
           } else {
             year.content[currentMonth - 1].push(color);
-            return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
-              if (e) {
-                throw new Error(e);
-              }
-              year.save(e => {if (e) { throw new Error(e); }});
+            console.log(year);
+            year.save(e => {
+              if (e) { throw new Error(e); }
+              return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
             });
           }
         }).catch(e => {throw new Error(e)});
