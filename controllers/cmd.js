@@ -73,14 +73,14 @@ module.exports = app => {
           while (year.content.length < currentMonth) {
             year.content.push([]);
           }
-          while (year.content[currentMonth].length < (currentDay - 1)) {  // currentDay stores the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
-            year.content[currentMonth].push('');
+          while (year.content[currentMonth - 1].length < (currentDay - 1)) {  // currentDay stores the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
+            year.content[currentMonth - 1].push('');
           }
     
           // check whether today's mood has already been defined, and then set
           let color = message.text.replace(/^(am)|(pm) */i, '').toLowerCase();
-          if (year.content[currentMonth][currentDay - 1]) {
-            year.content[currentMonth][currentDay - 1] = color;
+          if (year.content[currentMonth - 1][currentDay - 1]) {
+            year.content[currentMonth - 1][currentDay - 1] = color;
             return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
@@ -88,7 +88,7 @@ module.exports = app => {
               year.save(e => {if (e) { throw new Error(e); }});
             });
           } else {
-            year.content[currentMonth].push(color);
+            year.content[currentMonth - 1].push(color);
             return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, e => {
               if (e) {
                 throw new Error(e);
