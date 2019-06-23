@@ -29,7 +29,7 @@ const sendPhoto = (to, message, photo, callback) => {
      message = "Hey! You're not my developer. Get out of here (for now)!"
   }
   const options = {
-    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&caption=${encodeURIComponent(mesage)}&photo=attach://year.png&parse_mode=markdown`,
+    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&caption=${encodeURIComponent(message)}&photo=attach://year.png&parse_mode=markdown`,
     formData: {
       //type: "photo",
       //caption: message,
