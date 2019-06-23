@@ -97,9 +97,9 @@ module.exports = app => {
           }
     
           // check whether today's mood has already been defined, and then set
-          let color = message.text.replace(/^\/am *|^\/pm */i, '')
+          let color = message.text.replace(/^\/am *|^\/pm */i, '');
           let colorIndex = () => {
-            user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
+            return user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
           };
           if (color === '') {
             return send(message.chat.id, 'You need to tell me what color today was!', handleError);
