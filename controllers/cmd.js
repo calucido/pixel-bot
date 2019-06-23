@@ -162,20 +162,23 @@ module.exports = app => {
         }
       } else if (message.text.match(/^\/year /i)) { // respond to requests to see a graph of the year
         let requestedYear = message.text.match(/\d{4}$/);
+        let requestedYearType = message.text.match(/(am|pm)$/i)[1].toLowerCase();
         if (!requestedYear) {
           return send(message.chat.id, "You need to tell me what year you want to see.", handleError);
+        } else if (!requestedYearType) {
+          return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
-          models.Year.findOne({userId: message.from.username, year: requestedYear}).then((e, year) => {
+          models.Year.findOne({userId: message.from.username, year: requestedYear, yearType: requestedYearType}).then((e, year) => {
             let colorMap = {};
             user.colors.forEach(color => {
               colorMap[color.name] = color;
             });
             new Jimp(12, 31, (e, image) => {
-              for (let month = 0; month < year.length; month++) {
-                for (let day = 0; day < year[month].length; day++) {
-                  image.setPixelColor(Jimp.cssColorToHex(colorMap[year[month][day]]), month, day);
+              for (let month = 0; month < year.content.length; month++) {
+                for (let day = 0; day < year.content[month].length; day++) {
+                  image.setPixelColor(Jimp.cssColorToHex(colorMap[year.content[month][day]]), month, day);
                 }
-                if (month === (year.length - 1)) {
+                if (month === (year.content.length - 1)) {
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
                     sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
                   });
