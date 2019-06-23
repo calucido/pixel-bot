@@ -74,15 +74,15 @@ module.exports = app => {
           });
         }
       } else if (message.text.match(/^\/am *|^\/pm */i)) { // see if it's a mood log "am" or "pm"
-        let yearType = message.text.match(/^\/(am)|^\/(pm)/i)[0].toLowerCase();
+        let yearType = message.text.match(/^\/(am)|^\/(pm)/i)[1].toLowerCase(); // safe to use .toLowerCase() immediately because the string for sure exists otherwise the preceding match would have failed
         if (!user.timezone) {
-          user.timezone = '';
+          return send(message.chat.id, "What timezone are you in? (e.g. US/Eastern)", handleError);
         }
         let currentYear = moment.tz(user.timezone).format('YYYY');
         let currentMonth = Number(moment.tz(user.timezone).format('MM'));
         let currentDay = Number(moment.tz(user.timezone).format('DD'));
 
-        models.Year.findOne({userId: message.from.username, year: currentYear}).then((year) => {
+        models.Year.findOne({userId: message.from.username, year: currentYear, yearType}).then((year) => {
           // correct missing year
           if (!year) {
             year = new models.Year({userId: message.from.username, year: currentYear, yearType});
@@ -92,7 +92,7 @@ module.exports = app => {
           while (year.content.length < currentMonth) {
             year.content.push([]);
           }
-          while (year.content[currentMonth - 1].length < (currentDay - 1)) {  // currentDay stores the REAL date, which starts at 1; length returns a count, which starts at 1. June 21 is year.content[5][20]
+          while (year.content[currentMonth - 1].length < (currentDay - 1)) { // June 21 is year.content[5][20]
             year.content[currentMonth - 1].push('');
           }
     
@@ -165,8 +165,12 @@ module.exports = app => {
         } else if (!requestedYearType) {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
+          requestedYear = requestedYear[1];
           requestedYearType = requestedYearType[1].toLowerCase();
           models.Year.findOne({userId: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
+            if (!year) {
+              return send(message.chat.id, `I couldn't find ${requestedYear} ${requestedYearType}.`, handleError);
+            }
             let colorMap = {};
             user.colors.forEach(color => {
               colorMap[color.name] = color.hex;
@@ -182,7 +186,7 @@ module.exports = app => {
                 }
                 if (month === (year.content.length - 1)) {
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
+                    return sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
                   });
                 }
               }
