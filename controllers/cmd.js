@@ -34,7 +34,7 @@ const sendPhoto = (to, message, photo, callback) => {
       //type: "photo",
       //caption: message,
       //media: 'attach://year.png',
-      custom_file: {
+      photo: {
         value: photo,
         options: {
           filename: 'year.png',
