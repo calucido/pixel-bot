@@ -86,7 +86,6 @@ module.exports = app => {
           // correct missing year
           if (!year) {
             year = new models.Year({userId: message.from.username, year: currentYear, yearType});
-            year.save(e => {if (e) { throw new Error(e); }});
           }
 
           // correct missed months/days
@@ -107,20 +106,19 @@ module.exports = app => {
             let colorIndex = user.colors.findIndex(obj => {return obj.name === color;});
           }
 
+          if (user.colors[colorIndex].used === false) {
+            user.colors[colorIndex].used = true;
+            user.save(handleError);
+          }
+
           if (year.content[currentMonth - 1][currentDay - 1]) {
             year.content[currentMonth - 1][currentDay - 1] = color;
             year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             
-            // mark color as used if it isn't yet
-            if (user.colors[colorIndex].used === false) { user.colors[colorIndex].used = true; }
-            
-            user.save(e => {
-             if (e) { throw new Error(e); } 
-             year.save(e => {
-                if (e) { throw new Error(e); }
-                return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
-              });
-            });
+           year.save(e => {
+              if (e) { throw new Error(e); }
+              return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+           });
           } else {
             year.content[currentMonth - 1].push(color);
             year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
