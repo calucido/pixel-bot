@@ -1,6 +1,7 @@
 "use strict";
 const request = require('request')
     , moment = require('moment-timezone')
+    , Jimp = require('jimp')
     , packageJSON = require('../package.json')
     , models = require('../models');
 
@@ -21,6 +22,37 @@ const send = (to, message, callback) => {
     }
     return callback(e);
   });
+};
+
+const sendPhoto = (to, message, photo, callback) => {
+  if (to != '379133893') {
+     message = "Hey! You're not my developer. Get out of here (for now)!"
+  }
+  const options = {
+    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&parse_mode=markdown`,
+    formData: {
+      type: "photo",
+      caption: message,
+      media: 'attach://year.png',
+      custom_file: {
+        value: photo,
+        options: {
+          filename: 'year.png',
+          contentType: 'image/png'
+        }
+      }
+    },
+    headers: {
+      'User-Agent': `DailyPixelBot/${packageJSON.version}`
+    }
+  };  
+  request.post(options, (e, response, body) => {
+    if (body.ok === false) {
+      e = body.description;
+    }
+    console.log(body);
+    return callback(e);
+  }); 
 };
 
 const handleError = e => {
@@ -114,18 +146,43 @@ module.exports = app => {
         });
       } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1].toLowerCase();
-        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1].toLowerCase();
+        let colorHex = message.text.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)[1];
+        let colorInt = Jimp.cssColorToHex(colorHex);
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i)[1].toLowerCase();
-        if (!colorHex) {
+        if (!colorInt) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
-          user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
+          user.colors.push({name: colorName, int: colorInt, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
           });
+        }
+      } else if (message.text.match(/^\/year /i)) { // respond to requests to see a graph of the year
+        let requestedYear = message.text.match(/\d{4}$/);
+        if (!requestedYear) {
+          return send(message.chat.id, "You need to tell me what year you want to see.", handleError);
+        } else {
+          models.Year.findOne({userId: message.from.username, year: requestedYear}).then((e, year) => {
+            let colorMap = {};
+            user.colors.forEach(color => {
+              colorMap[color.name] = color;
+            });
+            new Jimp(12, 31, (e, image) => {
+              for (let month = 0; month < year.length; month++) {
+                for (let day = 0; day < year[month].length; day++) {
+                  image.setPixelColor(Jimp.cssColorToHex(colorMap[year[month][day]]), month, day);
+                }
+                if (month === (year.length - 1)) {
+                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
+                  });
+                }
+              }
+            });
+          }).catch(handleError);
         }
       } else if (moment.tz.zone(message.text)) {
         user.timezone = message.text;

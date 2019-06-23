@@ -1,6 +1,5 @@
 "use strict";
-const bcrypt = require('bcrypt')
-    , mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   userId: {type: String, index: true},
