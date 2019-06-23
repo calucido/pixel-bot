@@ -24,17 +24,20 @@ const send = (to, message, callback) => {
   });
 };
 
-const sendPhoto = (to, message, photo, callback) => {
+const sendPhoto = (to, message, photoBuffer, callback) => {
   if (to != '379133893') {
      message = "Hey! You're not my developer. Get out of here (for now)!"
   }
   const options = {
     url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&caption=${encodeURIComponent(message)}&parse_mode=markdown`,
     formData: {
-      //type: "photo",
-      //caption: message,
-      //media: 'attach://year.png',
-      photo: {value: photo, contentType: "image/png"}
+      photo: {
+        value: photoBuffer,
+        options: {
+          filename: "data.png",
+          contentType: "image/png"
+        }
+      }
     },
     headers: {
       'User-Agent': `DailyPixelBot/${packageJSON.version}`
@@ -179,7 +182,7 @@ module.exports = app => {
                 }
                 if (month === (year.content.length - 1)) {
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
+                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data.buffer, handleError);
                   });
                 }
               }
