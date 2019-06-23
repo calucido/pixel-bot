@@ -182,7 +182,7 @@ module.exports = app => {
                 }
                 if (month === (year.content.length - 1)) {
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data.buffer, handleError);
+                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
                   });
                 }
               }
