@@ -43,12 +43,10 @@ const sendPhoto = (to, message, photoBuffer, callback) => {
       'User-Agent': `DailyPixelBot/${packageJSON.version}`
     }
   };  
-  console.log(options);
   request.post(options, (e, response, body) => {
     if (body.ok === false) {
       e = body.description;
     }
-    console.log(body);
     return callback(e);
   }); 
 };
@@ -181,8 +179,10 @@ module.exports = app => {
                   image.setPixelColor(Jimp.cssColorToHex(colorMap[year.content[month][day]]), month, day);
                 }
                 if (month === (year.content.length - 1)) {
-                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
+                  image.resize(240, 620, (e, image) => {
+                    image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                      sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
+                    });
                   });
                 }
               }
