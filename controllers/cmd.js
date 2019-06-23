@@ -142,10 +142,9 @@ module.exports = app => {
         });
       } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i);
-        let colorHex = message.text.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/);
-        let colorInt = Jimp.cssColorToHex(colorHex);
+        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/);
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i);
-        if (colorInt === 0 || !colorInt) {
+        if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
@@ -153,7 +152,7 @@ module.exports = app => {
           colorName = colorName[1].toLowerCase();
           colorHex = colorHex[1];
           colorMood = colorMood[1].toLowerCase();
-          user.colors.push({name: colorName, int: colorInt, mood: colorMood, used: false});
+          user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
@@ -171,18 +170,20 @@ module.exports = app => {
           models.Year.findOne({userId: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
             let colorMap = {};
             user.colors.forEach(color => {
-              colorMap[color.name] = color;
+              colorMap[color.name] = color.hex;
             });
-            new Jimp(12, 31, (e, image) => {
+            new Jimp(240, 620, (e, image) => { // 240 = 12*20; 620 = 31*20;
               for (let month = 0; month < year.content.length; month++) {
                 for (let day = 0; day < year.content[month].length; day++) {
-                  image.setPixelColor(Jimp.cssColorToHex(colorMap[year.content[month][day]]), month, day);
+                  if (year.content[month][day] !== '') {
+                    image.scan(month*20, day*20, 20, 20, function(x, y, offset) { // 240 = 12*20; 620 = 31*20; *20 is for scaling factor;
+                      this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[year.content[month][day]]), offset, true);
+                    });
+                  }
                 }
                 if (month === (year.content.length - 1)) {
-                  image.resize(240, 620, (e, image) => {
-                    image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                      sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
-                    });
+                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                    sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
                   });
                 }
               }
