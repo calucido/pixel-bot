@@ -145,15 +145,18 @@ module.exports = app => {
           }
         });
       } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
-        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1].toLowerCase();
-        let colorHex = message.text.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/)[1];
+        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i);
+        let colorHex = message.text.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/);
         let colorInt = Jimp.cssColorToHex(colorHex);
-        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i)[1].toLowerCase();
-        if (!colorInt) {
+        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i);
+        if (colorInt === 0 || !colorInt) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
+          colorName = colorName[1].toLowerCase();
+          colorHex = colorHex[1];
+          colorMood = colorMood[1].toLowerCase();
           user.colors.push({name: colorName, int: colorInt, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
@@ -161,13 +164,14 @@ module.exports = app => {
           });
         }
       } else if (message.text.match(/^\/year /i)) { // respond to requests to see a graph of the year
-        let requestedYear = message.text.match(/\d{4}$/);
-        let requestedYearType = message.text.match(/(am|pm)$/i)[1].toLowerCase();
+        let requestedYear = message.text.match(/\d{4}/);
+        let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
           return send(message.chat.id, "You need to tell me what year you want to see.", handleError);
         } else if (!requestedYearType) {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
+          requestedYearType = requestedYearType[1].toLowerCase();
           models.Year.findOne({userId: message.from.username, year: requestedYear, yearType: requestedYearType}).then((e, year) => {
             let colorMap = {};
             user.colors.forEach(color => {
