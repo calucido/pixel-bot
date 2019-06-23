@@ -192,14 +192,20 @@ module.exports = app => {
             });
           }).catch(handleError);
         }
-      } else if (moment.tz.zone(message.text)) {
-        user.timezone = message.text;
+      } else if (message.text.match(/^\/timezone /i)) {
+        let timezone = message.text.replace(/^\/timezone +/i, '');
+        if (!moment.tz.zone(timezone)) {
+         return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
+        }
+        user.timezone = timezone;
         user.save(e => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, `Set your timezone to ${user.timezone}.`, handleError);
         });
-      } else  {  // I have no idea what you're saying
-        return send(message.chat.id, "what does that mean", handleError);
+      } else if (message.text.match(/^\/help/i)) { // send list of commands
+        return send(message.chat.id, `/am - Set the am mood.\n/pm - Set the pm mood.\n/color - Define a new color (usage: /color name #hex "mood")\n/year - See a graph of the year (usage: /year #### am)\n/colors - See a list of your defined colors.\n/tz - Set your timezone.`, handleError);
+      } else { // I have no idea what you're saying
+        return send(message.chat.id, "What does that mean? Say /help to see what I can do.", handleError);
       }
     });
   });
