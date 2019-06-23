@@ -172,7 +172,7 @@ module.exports = app => {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
           requestedYearType = requestedYearType[1].toLowerCase();
-          models.Year.findOne({userId: message.from.username, year: requestedYear, yearType: requestedYearType}).then((e, year) => {
+          models.Year.findOne({userId: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
             let colorMap = {};
             user.colors.forEach(color => {
               colorMap[color.name] = color;
