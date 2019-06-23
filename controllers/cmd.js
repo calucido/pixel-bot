@@ -165,7 +165,6 @@ module.exports = app => {
         } else if (!requestedYearType) {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
-          requestedYear = requestedYear[1];
           requestedYearType = requestedYearType[1].toLowerCase();
           models.Year.findOne({userId: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
             if (!year) {
