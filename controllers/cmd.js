@@ -97,13 +97,13 @@ module.exports = app => {
           }
     
           // check whether today's mood has already been defined, and then set
-          let color = message.text.replace(/^\/am *|^\/pm */i, '').toLowerCase();
+          let color = message.text.replace(/^\/am *|^\/pm */i, '')
           if (color === '') {
             return send(message.chat.id, 'You need to tell me what color today was!', handleError);
-          } else if (user.colors.findIndex(obj => {return obj.name === color;}) === -1) {
+          } else if (user.colors.findIndex(obj => {return obj.name === color.toLowerCase();}) === -1) {
             return send(message.chat.id, `You haven't saved a color named "${color}". Use '/color "${color}" #hexcode "mood"' to define it.`, handleError);
           } else {
-            let colorIndex = user.colors.findIndex(obj => {return obj.name === color;});
+            let colorIndex = user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
           }
 
           if (user.colors[colorIndex].used === false) {
@@ -115,10 +115,10 @@ module.exports = app => {
             year.content[currentMonth - 1][currentDay - 1] = color;
             year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             
-           year.save(e => {
+            year.save(e => {
               if (e) { throw new Error(e); }
               return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
-           });
+            });
           } else {
             year.content[currentMonth - 1].push(color);
             year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
