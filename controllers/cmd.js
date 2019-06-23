@@ -34,7 +34,7 @@ const sendPhoto = (to, message, photo, callback) => {
       //type: "photo",
       //caption: message,
       //media: 'attach://year.png',
-      photo
+      photo: {value: photo, contentType: "application/octet-stream"}
     },
     headers: {
       'User-Agent': `DailyPixelBot/${packageJSON.version}`
