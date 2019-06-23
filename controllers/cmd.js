@@ -98,16 +98,17 @@ module.exports = app => {
     
           // check whether today's mood has already been defined, and then set
           let color = message.text.replace(/^\/am *|^\/pm */i, '')
+          let colorIndex = () => {
+            user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
+          };
           if (color === '') {
             return send(message.chat.id, 'You need to tell me what color today was!', handleError);
           } else if (user.colors.findIndex(obj => {return obj.name === color.toLowerCase();}) === -1) {
             return send(message.chat.id, `You haven't saved a color named "${color}". Use '/color "${color}" #hexcode "mood"' to define it.`, handleError);
-          } else {
-            let colorIndex = user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
           }
 
-          if (user.colors[colorIndex].used === false) {
-            user.colors[colorIndex].used = true;
+          if (user.colors[colorIndex()].used === false) {
+            user.colors[colorIndex()].used = true;
             user.save(handleError);
           }
 
