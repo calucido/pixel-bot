@@ -73,8 +73,8 @@ module.exports = app => {
             return send(message.chat.id, 'sup bud', handleError);
           });
         }
-      } else if (message.text.match(/^\/am *|^\/pm */i)) { // see if it's a mood log "am" or "pm"
-        let yearType = message.text.match(/^\/(am)|^\/(pm)/i)[1].toLowerCase(); // safe to use .toLowerCase() immediately because the string for sure exists otherwise the preceding match would have failed
+      } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
+        let yearType = message.text.match(/^\/(am|pm)/i)[1].toLowerCase(); // safe to use .toLowerCase() immediately because the string for sure exists otherwise the preceding match would have failed
         if (!user.timezone) {
           return send(message.chat.id, "What timezone are you in? (e.g. US/Eastern)", handleError);
         }
@@ -139,7 +139,7 @@ module.exports = app => {
             throw new Error(e);
           }
         });
-      } else if (message.text.match(/^\/color /i)) { // allow ppl to define colors
+      } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i);
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/);
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i);
@@ -157,7 +157,7 @@ module.exports = app => {
             return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
           });
         }
-      } else if (message.text.match(/^\/year /i)) { // respond to requests to see a graph of the year
+      } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
         let requestedYear = message.text.match(/\d{4}/);
         let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
