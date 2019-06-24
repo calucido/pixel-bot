@@ -6,16 +6,12 @@ const request = require('request')
     , models = require('../models');
 
 const send = (to, message, callback) => {
-  if (to != '379133893') {
-     message = "Hey! You're not my developer. Get out of here (for now)!"
-  }
   const options = {
     url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendMessage?chat_id=${to}&text=${encodeURIComponent(message)}&parse_mode=markdown`,
     headers: {
       'User-Agent': `DailyPixelBot/${packageJSON.version}`
     }
   };
-//  console.log(options);
   request.get(options, (e, response, body) => {
     if (body.ok === false) {
       e = body.description;
@@ -25,9 +21,6 @@ const send = (to, message, callback) => {
 };
 
 const sendPhoto = (to, message, photoBuffer, callback) => {
-  if (to != '379133893') {
-     message = "Hey! You're not my developer. Get out of here (for now)!"
-  }
   const options = {
     url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&caption=${encodeURIComponent(message)}&parse_mode=markdown`,
     formData: {
