@@ -1,22 +1,19 @@
 "use strict";
-const mongoose = require('mongoose')
+const models = require('../models')
     , {send, handleError} = require('../lib/common');
 
-mongoose.connect(process.env.MONGODB_URI);
-const db = mongoose.connection;
+const db = models.db;
 
-db.on('error', (e) => {
-  throw new Error(e);
-});
 db.once('open', () => {
  console.log('open')
   require('../models/user');
-  const User = mongoose.model('User');
-  User.find({}).then((users) => {
+  models.User.find({}).then((users) => {
     console.log(users)
     users.forEach(user => {
       console.log(user, send)
+      setTimeout(() => {
         send(user.chatId, "Remember to set your moods before midnight!", handleError);
+      }, 35);
     });
   }).catch(e => {throw new Error(e)});
 });
