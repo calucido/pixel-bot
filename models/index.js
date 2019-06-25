@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 mongoose.connect(process.env.MONGODB_URI);
 const db = mongoose.connection;
 
+module.exports.db = db;
+
 db.on('error', (e) => {
   throw new Error(e);
 });

@@ -1,54 +1,8 @@
 "use strict";
-const request = require('request')
-    , moment = require('moment-timezone')
+const moment = require('moment-timezone')
     , Jimp = require('jimp')
-    , packageJSON = require('../package.json')
-    , models = require('../models');
-
-const send = (to, message, callback) => {
-  const options = {
-    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendMessage?chat_id=${to}&text=${encodeURIComponent(message)}&parse_mode=markdown`,
-    headers: {
-      'User-Agent': `DailyPixelBot/${packageJSON.version}`
-    }
-  };
-  request.get(options, (e, response, body) => {
-    if (body.ok === false) {
-      e = body.description;
-    }
-    return callback(e);
-  });
-};
-
-const sendPhoto = (to, message, photoBuffer, callback) => {
-  const options = {
-    url: `https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendPhoto?chat_id=${to}&caption=${encodeURIComponent(message)}&parse_mode=markdown`,
-    formData: {
-      photo: {
-        value: photoBuffer,
-        options: {
-          filename: "data.png",
-          contentType: "image/png"
-        }
-      }
-    },
-    headers: {
-      'User-Agent': `DailyPixelBot/${packageJSON.version}`
-    }
-  };  
-  request.post(options, (e, response, body) => {
-    if (body.ok === false) {
-      e = body.description;
-    }
-    return callback(e);
-  }); 
-};
-
-const handleError = e => {
-  if (e) {
-    throw new Error(e);
-  }
-};
+    , models = require('../models')
+    , {send, sendPhoto, handleError} = require('./lib/common'),
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
@@ -60,7 +14,7 @@ module.exports = app => {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({userId: message.from.username})
+          user = new models.User({userId: message.from.username, chatId: (message.chat.id + '')})
           user.save(e => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, 'sup bud', handleError);
@@ -200,6 +154,6 @@ module.exports = app => {
       } else { // I have no idea what you're saying
         return send(message.chat.id, "What does that mean? Say /help to see what I can do.", handleError);
       }
-    });
+    }).catch(e => {throw new Error(e);});
   });
 }
