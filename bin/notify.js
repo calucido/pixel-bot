@@ -9,11 +9,14 @@ db.once('open', () => {
   require('../models/user');
   models.User.find({}).then((users) => {
     console.log(users)
-    users.forEach(user => {
-      console.log(user, send)
+    for (let i = 0; i < users.length; i++) {
+      console.log(users[i], send)
       setTimeout(() => {
-        send(user.chatId, "Remember to set your moods before midnight!", handleError);
+        send(users[i].chatId, "Remember to set your moods before midnight!", e => {
+          if (e) { throw new Error(e); }
+          if (i === users.length - 1) { process.exit(); }
+        });
       }, 35);
-    });
+    }
   }).catch(e => {throw new Error(e)});
 });
