@@ -2,7 +2,7 @@
 const moment = require('moment-timezone')
     , Jimp = require('jimp')
     , models = require('../models')
-    , {send, sendPhoto, handleError} = require('./lib/common'),
+    , {send, sendPhoto, handleError} = require('../lib/common');
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
