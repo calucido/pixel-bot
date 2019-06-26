@@ -9,12 +9,12 @@ module.exports = app => {
     res.sendStatus(200);
     const message = req.body.message;
     
-    models.User.findOne({userId: message.from.username}).then((user) => {
+    models.User.findOne({username: message.from.username}).then((user) => {
       if (message.text.match(/^\/start/)) {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({userId: message.from.username, chatId: (message.chat.id + '')})
+          user = new models.User({username: message.from.username, chatId: (message.chat.id + '')})
           user.save(e => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, 'sup bud', handleError);
@@ -29,10 +29,10 @@ module.exports = app => {
         let currentMonth = Number(moment.tz(user.timezone).format('MM'));
         let currentDay = Number(moment.tz(user.timezone).format('DD'));
 
-        models.Year.findOne({userId: message.from.username, year: currentYear, yearType}).then((year) => {
+        models.Year.findOne({username: message.from.username, year: currentYear, yearType}).then((year) => {
           // correct missing year
           if (!year) {
-            year = new models.Year({userId: message.from.username, year: currentYear, yearType});
+            year = new models.Year({username: message.from.username, year: currentYear, yearType});
           }
 
           // correct missed months/days
@@ -113,7 +113,7 @@ module.exports = app => {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
           requestedYearType = requestedYearType[1].toLowerCase();
-          models.Year.findOne({userId: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
+          models.Year.findOne({username: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
             if (!year) {
               return send(message.chat.id, `I couldn't find ${requestedYear} ${requestedYearType}.`, handleError);
             }
