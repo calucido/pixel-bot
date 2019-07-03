@@ -121,11 +121,11 @@ module.exports = app => {
             user.colors.forEach(color => {
               colorMap[color.name] = color.hex;
             });
-            new Jimp(240, 620, (e, image) => { // 240 = 12*20; 620 = 31*20;
+            Jimp.read('year.png'), (e, image) => {
               for (let month = 0; month < year.content.length; month++) {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') {
-                    image.scan(month*20, day*20, 20, 20, function(x, y, offset) { // 240 = 12*20; 620 = 31*20; *20 is for scaling factor;
+                    image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
                       this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[year.content[month][day]]), offset, true);
                     });
                   }
