@@ -121,7 +121,7 @@ module.exports = app => {
             user.colors.forEach(color => {
               colorMap[color.name] = color.hex;
             });
-            Jimp.read('year.png'), (e, image) => {
+            Jimp.read('year.png', (e, image) => {
               for (let month = 0; month < year.content.length; month++) {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') {
