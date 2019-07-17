@@ -40,7 +40,7 @@ const defaultColors = [
             "hex": "#b45f06",
             "mood": "anxious",
             "used": false
-        },
+        }
 ];
 
 module.exports = app => {
