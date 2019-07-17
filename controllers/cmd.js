@@ -57,8 +57,8 @@ module.exports = app => {
           user.save(e => {
             if (e) { throw new Error(e); }
             send(message.chat.id, 'Hi! Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError);
-            setTimeout(() => {return send(message.chat.id, `I've set you up with some default colors. You can always add more! To see the defaults, say /colors`);}, 7000);
-            return setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"');}, 14000); 
+            setTimeout(() => {return send(message.chat.id, `I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 7000);
+            return setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 14000); 
           });
         }
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
@@ -144,6 +144,19 @@ module.exports = app => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
           });
+        }
+      } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
+        let colorName = message.text.replace(/^\/delete +/i, '');
+        let colorIndex = user.colors.map(color => {return color.name}).indexOf(colorName);
+        if (colorIndex === -1) {
+          return send(message.chat.id, "You haven't defined a color by that name.", handleError);
+        } else if (user.colors[colorIndex].used === true) {
+          return send(message.chat.id, "You can't delete that color since you've already used it.", handleError);
+        } else {
+          user.colors.splice(colorIndex, 1);
+          user.save(e => {
+          if (e) { throw new Error(e); }
+          return send(message.chat.id, "Deleted!", handleError);
         }
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
         let requestedYear = message.text.match(/\d{4}/);
