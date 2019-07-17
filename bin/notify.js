@@ -5,7 +5,7 @@ const models = require('../models')
 const db = models.db;
 
 db.once('open', () => {
- console.log('open')
+//  console.log('open')
   require('../models/user');
   models.User.find({}).then((users) => {
     for (let i = 0; i < users.length; i++) {
