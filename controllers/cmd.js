@@ -155,8 +155,9 @@ module.exports = app => {
         } else {
           user.colors.splice(colorIndex, 1);
           user.save(e => {
-          if (e) { throw new Error(e); }
-          return send(message.chat.id, "Deleted!", handleError);
+            if (e) { throw new Error(e); }
+            return send(message.chat.id, "Deleted!", handleError);
+          });
         }
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
         let requestedYear = message.text.match(/\d{4}/);
