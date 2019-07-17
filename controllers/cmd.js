@@ -4,6 +4,45 @@ const moment = require('moment-timezone')
     , models = require('../models')
     , {send, sendPhoto, handleError} = require('../lib/common');
 
+const defaultColors = [
+        {
+            "name": "yellow",
+            "hex": "#ffd966",
+            "mood": "happy",
+            "used": false
+        },
+        {
+            "name": "green",
+            "hex": "#38761d",
+            "mood": "neutral",
+            "used": false
+        },
+        {
+            "name": "purple",
+            "hex": "#674ea7",
+            "mood": "annoyed",
+            "used": false
+        },
+        {
+            "name": "red",
+            "hex": "#cc0000",
+            "mood": "angry",
+            "used": false
+        },
+        {
+            "name": "light blue",
+            "hex": "#6fa8dc",
+            "mood": "sad",
+            "used": false
+        },
+        {
+            "name": "brown",
+            "hex": "#b45f06",
+            "mood": "anxious",
+            "used": false
+        },
+];
+
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
@@ -14,10 +53,12 @@ module.exports = app => {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({userId: message.from.username, chatId: (message.chat.id + '')})
+          user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors}); 
           user.save(e => {
             if (e) { throw new Error(e); }
-            return send(message.chat.id, 'sup bud', handleError);
+            send(message.chat.id, 'Hi! Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError);
+            setTimeout(() => {return send(message.chat.id, `I've set you up with some default colors. You can always add more! To see the defaults, say /colors`);}, 7000);
+            return setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"');}, 14000); 
           });
         }
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"

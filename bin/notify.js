@@ -8,9 +8,7 @@ db.once('open', () => {
  console.log('open')
   require('../models/user');
   models.User.find({}).then((users) => {
-    console.log(users)
     for (let i = 0; i < users.length; i++) {
-      console.log(users[i], send)
       setTimeout(() => {
         send(users[i].chatId, "Remember to set your moods before midnight!", e => {
           if (e) { throw new Error(e); }
