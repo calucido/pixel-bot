@@ -195,7 +195,7 @@ module.exports = app => {
         }
       } else if (message.text.match(/^\/timezone/i)) {
         let timezone = message.text.replace(/^\/timezone +/i, '');
-        if (!moment.tz.zone(timezone)) {
+        if (!timezone || !moment.tz.zone(timezone)) {
          return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
         }
         user.timezone = timezone;
