@@ -128,17 +128,16 @@ module.exports = app => {
           }
         });
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
-        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i);
-        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/);
-        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i);
+        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
+        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
+        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
         if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
-          colorName = colorName[1].toLowerCase();
-          colorHex = colorHex[1];
-          colorMood = colorMood[1].toLowerCase();
+          colorName = colorName.toLowerCase();
+          colorMood = colorMood.toLowerCase();
           user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
