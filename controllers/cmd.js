@@ -44,6 +44,15 @@ const defaultColors = [
 ];
 
 module.exports = app => {
+  try {
+    cmd(app);
+  } catch (e) {
+    send(process.env.ADMIN_TELEGRAM_ID, `Something broke:\n${e}`, handleError);
+    throw new Error(e);
+  }
+};
+
+const cmd = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
     const message = req.body.message;
