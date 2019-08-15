@@ -2,7 +2,46 @@
 const moment = require('moment-timezone')
     , Jimp = require('jimp')
     , models = require('../models')
-    , {send, sendPhoto, handleError} = require('./lib/common'),
+    , {send, sendPhoto, handleError} = require('../lib/common');
+
+const defaultColors = [
+        {
+            "name": "yellow",
+            "hex": "#ffd966",
+            "mood": "happy",
+            "used": false
+        },
+        {
+            "name": "green",
+            "hex": "#38761d",
+            "mood": "neutral",
+            "used": false
+        },
+        {
+            "name": "purple",
+            "hex": "#674ea7",
+            "mood": "annoyed",
+            "used": false
+        },
+        {
+            "name": "red",
+            "hex": "#cc0000",
+            "mood": "angry",
+            "used": false
+        },
+        {
+            "name": "light blue",
+            "hex": "#6fa8dc",
+            "mood": "sad",
+            "used": false
+        },
+        {
+            "name": "brown",
+            "hex": "#b45f06",
+            "mood": "anxious",
+            "used": false
+        }
+];
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
@@ -14,10 +53,12 @@ module.exports = app => {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({username: message.from.username, chatId: (message.chat.id + '')})
+          user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors}); 
           user.save(e => {
             if (e) { throw new Error(e); }
-            return send(message.chat.id, 'sup bud', handleError);
+            send(message.chat.id, 'Hi! Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError);
+            setTimeout(() => {return send(message.chat.id, `I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 7000);
+            return setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 14000); 
           });
         }
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
@@ -87,21 +128,34 @@ module.exports = app => {
           }
         });
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
-        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i);
-        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/);
-        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"(.+)"$/i);
+        let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
+        let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
+        let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
         if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
-          colorName = colorName[1].toLowerCase();
-          colorHex = colorHex[1];
-          colorMood = colorMood[1].toLowerCase();
+          colorName = colorName.toLowerCase();
+          colorMood = colorMood.toLowerCase();
           user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
           user.save(e => {
             if (e) { throw new Error(e); }
             return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
+          });
+        }
+      } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
+        let colorName = message.text.replace(/^\/delete +/i, '');
+        let colorIndex = user.colors.map(color => {return color.name}).indexOf(colorName);
+        if (colorIndex === -1) {
+          return send(message.chat.id, "You haven't defined a color by that name.", handleError);
+        } else if (user.colors[colorIndex].used === true) {
+          return send(message.chat.id, "You can't delete that color since you've already used it.", handleError);
+        } else {
+          user.colors.splice(colorIndex, 1);
+          user.save(e => {
+            if (e) { throw new Error(e); }
+            return send(message.chat.id, "Deleted!", handleError);
           });
         }
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
@@ -121,11 +175,11 @@ module.exports = app => {
             user.colors.forEach(color => {
               colorMap[color.name] = color.hex;
             });
-            new Jimp(240, 620, (e, image) => { // 240 = 12*20; 620 = 31*20;
+            Jimp.read('year.png', (e, image) => {
               for (let month = 0; month < year.content.length; month++) {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') {
-                    image.scan(month*20, day*20, 20, 20, function(x, y, offset) { // 240 = 12*20; 620 = 31*20; *20 is for scaling factor;
+                    image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
                       this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[year.content[month][day]]), offset, true);
                     });
                   }
