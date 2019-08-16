@@ -8,7 +8,6 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
     const message = req.body.message;
-    console.log(message);
     
     models.User.findOne({username: message.from.username}).then((user) => {
       if (user.state === 'colors') {
