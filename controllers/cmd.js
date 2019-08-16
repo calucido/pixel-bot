@@ -56,16 +56,20 @@ module.exports = app => {
           user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors, state: 'newUser'}); 
           user.generateKeyPair((e, publicKey, privateKey) => {
             if (e) { throw new Error(e); }
-            for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
-              user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
-                if (e) { throw new Error(e); }
-                user.colors[i].mood = encryptedMood;
-              });
-            }
-            user.save(e => {
+            user.publicKey = publicKey;
+            user.save(e => { // have to save here so that user.encrypt has access to user.publicKey; even if it's defined, it has to be saved
               if (e) { throw new Error(e); }
-              send(message.chat.id, `Hi there! Very important notice: this picture is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.\n${privateKey}`, handleError);
-              return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
+              for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
+                user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
+                  if (e) { throw new Error(e); }
+                  user.colors[i].mood = encryptedMood;
+                });
+              }
+              user.save(e => {
+                if (e) { throw new Error(e); }
+                send(message.chat.id, `Hi there! Very important notice: this picture is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.\n${privateKey}`, handleError);
+                return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
+              });
             });
           });
         }
