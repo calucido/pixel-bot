@@ -2,51 +2,14 @@
 const moment = require('moment-timezone')
     , Jimp = require('jimp')
     , models = require('../models')
-    , {send, sendPhoto, handleError} = require('../lib/common');
-
-const defaultColors = [
-        {
-            "name": "yellow",
-            "hex": "#ffd966",
-            "mood": "happy",
-            "used": false
-        },
-        {
-            "name": "green",
-            "hex": "#38761d",
-            "mood": "neutral",
-            "used": false
-        },
-        {
-            "name": "purple",
-            "hex": "#674ea7",
-            "mood": "annoyed",
-            "used": false
-        },
-        {
-            "name": "red",
-            "hex": "#cc0000",
-            "mood": "angry",
-            "used": false
-        },
-        {
-            "name": "light blue",
-            "hex": "#6fa8dc",
-            "mood": "sad",
-            "used": false
-        },
-        {
-            "name": "brown",
-            "hex": "#b45f06",
-            "mood": "anxious",
-            "used": false
-        }
-];
+    , {send, sendPhoto, handleError, defaultColors} = require('../lib/common');
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
     const message = req.body.message;
+    console.log(message);
+    
     
     models.User.findOne({username: message.from.username}).then((user) => {
       if (message.text.match(/^\/start/)) {
