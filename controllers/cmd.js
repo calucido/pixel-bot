@@ -53,7 +53,7 @@ module.exports = app => {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors, state: 'newUser'}); 
+          user = new models.User({username: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors, state: 'newUser'}); 
           user.generateKeyPair((e, publicKey, privateKey) => {
             if (e) { throw new Error(e); }
             user.publicKey = publicKey;
