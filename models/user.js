@@ -32,13 +32,13 @@ userSchema.methods.generateKeyPair = callback => {
 
 userSchema.methods.encrypt = (data, callback) => {
   try {
-    return callback(null, crypto.encryptPublic(this.publicKey, Buffer.from(data)));
+    return callback(null, crypto.publicEncrypt(this.publicKey, Buffer.from(data)));
   } catch(e) { return callback(e, false); }
 };
 
 userSchema.methods.decrypt = (privateKey, data, callback) => {
   try {
-    return callback(null, crypto.decryptPrivate(privateKey, data));
+    return callback(null, crypto.privateDecrypt(privateKey, data));
   } catch(e) { return callback(e, false); }
 };
 
