@@ -2,7 +2,7 @@
 const moment = require('moment-timezone')
     , Jimp = require('jimp')
     , models = require('../models')
-    , {send, sendPhoto, handleError, defaultColors} = require('../lib/common');
+    , {defaultColors, downloadFile, handleError, send, sendPhoto} = require('../lib/common');
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
@@ -10,9 +10,27 @@ module.exports = app => {
     const message = req.body.message;
     console.log(message);
     
-    
     models.User.findOne({username: message.from.username}).then((user) => {
-      if (message.text.match(/^\/start/)) {
+      if (user.state === 'colors') {
+        if (!message.document) {
+          return send(message.chat.id, 'Please send me the private key I sent you way back when you signed up.', handleError);
+        }
+        downloadFile(message.document.file_id, (e, file) => {
+          if (e) { throw new Error(e); }
+          const privateKey = file;
+          let colors = '';
+          user.colors.forEach(color => {
+            user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
+              colors += `${color.name} (${color.hex}): ${decryptedMood}\n`
+            });
+          });
+          return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
+            if (e) {
+              throw new Error(e);
+            }
+          });
+        });
+      } else if (message.text.match(/^\/start/)) {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
@@ -23,7 +41,7 @@ module.exports = app => {
             for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
               user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
                 if (e) { throw new Error(e); }
-                user.colors[i].mood = encryptedMood;
+                user.colors[i].mood = encryptedMood.toString();
               });
             }
             user.save(e => {
@@ -74,7 +92,7 @@ module.exports = app => {
 
           if (year.content[currentMonth - 1][currentDay - 1]) {
             user.encrypt(color, (e, encryptedColor) => {
-              year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
+              year.content[currentMonth - 1][currentDay - 1] = encryptedColor.toString();
               year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             
               year.save(e => {
@@ -84,7 +102,7 @@ module.exports = app => {
             });
           } else {
             user.encrypt(color, (e, encryptedColor) => {
-              year.content[currentMonth - 1].push(encryptedColor);
+              year.content[currentMonth - 1].push(encryptedColor.toString());
               year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
               year.save(e => {
                 if (e) { throw new Error(e); }
@@ -94,24 +112,10 @@ module.exports = app => {
           }
         }).catch(e => {throw new Error(e)});
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
-// TODO decrypt mood before sending colors. requires handling an image being sent, but could be lazy and treat a message consisting of an image and nothing else as de facto "/colors" to avoid states
         user.state = 'colors';
         user.save(e => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, 'Please send me your private key as an image. (It\'s the one I sent you when you signed up!)', handleError);
-        });
-      } else if (user.state === 'colors') {
-        console.log(message);
-        let colors = '';
-        user.colors.forEach(color => {
-          user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
-            colors += `${color.name} (${color.hex}): ${decryptedMood}\n`
-          });
-        });
-        return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
-          if (e) {
-            throw new Error(e);
-          }
         });
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
 // TODO encrypt mood when adding a new color
