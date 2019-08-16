@@ -1,5 +1,6 @@
 "use strict";
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
+    , crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
   username: {type: String, index: true},
@@ -26,7 +27,9 @@ userSchema.methods.generateKeyPair = callback => {
       type: 'pkcs8',
       format: 'pem'
     }
-  }, callback);
+  }, (e, publicKey, privateKey) => {
+    return callback(e, publicKey, privateKey);
+  });
 };
 
 userSchema.methods.encrypt = (data, callback) => {
