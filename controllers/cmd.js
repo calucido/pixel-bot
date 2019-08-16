@@ -14,19 +14,19 @@ module.exports = app => {
         if (!message.document) {
           return send(message.chat.id, 'Please send me the private key I sent you way back when you signed up.', handleError);
         }
-        downloadFile(message.document.file_id, (e, file) => {
+        downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
-          const privateKey = file;
           let colors = '';
           user.colors.forEach(color => {
             user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
+              if (e) { throw new Error(e); }
               colors += `${color.name} (${color.hex}): ${decryptedMood}\n`
             });
           });
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
-            if (e) {
-              throw new Error(e);
-            }
+            if (e) { throw new Error(e); }
+            user.state = '';
+            user.save(handleError);
           });
         });
       } else if (message.text.match(/^\/start/)) {
