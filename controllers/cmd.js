@@ -20,7 +20,7 @@ module.exports = app => {
           user.colors.forEach(color => {
             user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
               if (e) { throw new Error(e); }
-              colors += `${color.name} (${color.hex}): ${decryptedMood}\n`
+              colors += `${color.name} (${color.hex}): ${decryptedMood.toString()}\n`
             });
           });
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
@@ -40,7 +40,7 @@ module.exports = app => {
             for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
               user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
                 if (e) { throw new Error(e); }
-                user.colors[i].mood = encryptedMood.toString();
+                user.colors[i].mood = encryptedMood;
               });
             }
             user.save(e => {
@@ -91,7 +91,7 @@ module.exports = app => {
 
           if (year.content[currentMonth - 1][currentDay - 1]) {
             user.encrypt(color, (e, encryptedColor) => {
-              year.content[currentMonth - 1][currentDay - 1] = encryptedColor.toString();
+              year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
               year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             
               year.save(e => {
@@ -101,7 +101,7 @@ module.exports = app => {
             });
           } else {
             user.encrypt(color, (e, encryptedColor) => {
-              year.content[currentMonth - 1].push(encryptedColor.toString());
+              year.content[currentMonth - 1].push(encryptedColor);
               year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
               year.save(e => {
                 if (e) { throw new Error(e); }

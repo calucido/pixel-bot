@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   colors: [
     {name: String,
     hex: String,
-    mood: String,
+    mood: Buffer,
     used: Boolean}
   ],
   publicKey: String,
