@@ -16,16 +16,30 @@ const userSchema = new mongoose.Schema({
   state: String
 });
 
+userSchema.methods.generateKeyPair = callback => {
+  return crypto.generateKeyPair('rsa', {
+    modulusLength: 4096,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem'
+    }
+  }, callback);
+};
+
 userSchema.methods.encrypt = (data, callback) => {
   try {
-    callback(null, crypto.encryptPublic(this.publicKey, Buffer.from(data)));
-  } catch(e) { callback(e, false); }
+    return callback(null, crypto.encryptPublic(this.publicKey, Buffer.from(data)));
+  } catch(e) { return callback(e, false); }
 };
 
 userSchema.methods.decrypt = (privateKey, data, callback) => {
   try {
-    callback(null, crypto.decryptPrivate(privateKey, data));
-  } catch(e) { callback(e, false); }
+    return callback(null, crypto.decryptPrivate(privateKey, data));
+  } catch(e) { return callback(e, false); }
 };
 
 module.exports = mongoose.model('User', userSchema);
