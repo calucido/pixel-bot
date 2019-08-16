@@ -53,12 +53,20 @@ module.exports = app => {
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
-          user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors}); 
-          user.save(e => {
+          user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors, state: 'newUser'}); 
+          user.generateKeyPair((e, privateKey, publicKey) => {
             if (e) { throw new Error(e); }
-            send(message.chat.id, 'Hi! Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError);
-            setTimeout(() => {return send(message.chat.id, `I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 7000);
-            return setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 14000); 
+            user.publicKey = publicKey;
+            for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
+              user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
+                user.colors[i].mood = encryptedMood;
+              });
+            }
+            user.save(e => {
+              if (e) { throw new Error(e); }
+              send(message.chat.id, `Hi there! Very important notice: this picture is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.\n${privateKey}`, handleError);
+              return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
+            });
           });
         }
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
@@ -85,7 +93,7 @@ module.exports = app => {
           }
     
           // check whether today's mood has already been defined, and then set
-          let color = message.text.replace(/^\/am *|^\/pm */i, '');
+          let color = message.text.replace(/^\/am +|^\/pm +/i, '');
           let colorIndex = () => {
             return user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
           };
@@ -101,26 +109,40 @@ module.exports = app => {
           }
 
           if (year.content[currentMonth - 1][currentDay - 1]) {
-            year.content[currentMonth - 1][currentDay - 1] = color;
-            year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+            user.encrypt(color, (e, encryptedColor) => {
+              year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
+              year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
             
-            year.save(e => {
-              if (e) { throw new Error(e); }
-              return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
-            });
+              year.save(e => {
+                if (e) { throw new Error(e); }
+                return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+              });
+            }});
           } else {
-            year.content[currentMonth - 1].push(color);
-            year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
-            year.save(e => {
-              if (e) { throw new Error(e); }
-              return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+            user.encrypt(color, (e, encryptedColor) => {
+              year.content[currentMonth - 1].push(encryptedColor);
+              year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+              year.save(e => {
+                if (e) { throw new Error(e); }
+                return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+              });
             });
           }
         }).catch(e => {throw new Error(e)});
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
+// TODO decrypt mood before sending colors. requires handling an image being sent, but could be lazy and treat a message consisting of an image and nothing else as de facto "/colors" to avoid states
+        user.state = 'colors';
+        user.save(e => {
+          if (e) { throw new Error(e); }
+          return send(message.chat.id, 'Please send me your private key as an image. (It\'s the one I sent you when you signed up!)', handleError);
+        });
+      } else if (user.state === 'colors') {
+        console.log(message);
         let colors = '';
         user.colors.forEach(color => {
-          colors += `${color.name} (${color.hex}): ${color.mood}\n`
+          user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
+            colors += `${color.name} (${color.hex}): ${decryptedMood}\n`
+          });
         });
         return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
           if (e) {
@@ -128,6 +150,7 @@ module.exports = app => {
           }
         });
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
+// TODO encrypt mood when adding a new color
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
@@ -159,6 +182,7 @@ module.exports = app => {
           });
         }
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
+// TODO decrypt each day. messes with plan for /colors
         let requestedYear = message.text.match(/\d{4}/);
         let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
@@ -199,6 +223,11 @@ module.exports = app => {
          return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
         }
         user.timezone = timezone;
+        if (user.state === 'newUser') {
+          user.state = '';
+          setTimeout(() => {return send(message.chat.id, `Thanks for taking care of that. I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 3000);
+          setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 5000);
+        } 
         user.save(e => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, `Set your timezone to ${user.timezone}.`, handleError);
