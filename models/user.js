@@ -1,6 +1,5 @@
 "use strict";
-const mongoose = require('mongoose')
-    , crypto = require('crypto');
+const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   username: {type: String, index: true},
@@ -32,7 +31,6 @@ userSchema.methods.generateKeyPair = callback => {
 
 userSchema.methods.encrypt = (data, callback) => {
   try {
-    console.log(this.publicKey)
     return callback(null, crypto.publicEncrypt(this.publicKey, Buffer.from(data)));
   } catch(e) { return callback(e, false); }
 };

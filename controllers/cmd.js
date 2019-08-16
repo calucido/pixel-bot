@@ -57,6 +57,7 @@ module.exports = app => {
           user.generateKeyPair((e, publicKey, privateKey) => {
             if (e) { throw new Error(e); }
             user.publicKey = publicKey;
+            console.log(publicKey);
             user.save(e => { // have to save here so that user.encrypt has access to user.publicKey; even if it's defined, it has to be saved
               if (e) { throw new Error(e); }
               for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
