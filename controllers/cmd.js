@@ -117,7 +117,7 @@ module.exports = app => {
                 if (e) { throw new Error(e); }
                 return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
               });
-            }});
+            });
           } else {
             user.encrypt(color, (e, encryptedColor) => {
               year.content[currentMonth - 1].push(encryptedColor);
