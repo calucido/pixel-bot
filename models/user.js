@@ -38,7 +38,7 @@ userSchema.methods.encrypt = function(data, callback) {
 
 userSchema.methods.decrypt = (privateKey, data, callback) => {
   try {
-    return callback(null, crypto.privateDecrypt(privateKey, data));
+    return callback(null, crypto.privateDecrypt(privateKey, Buffer.from(data)));
   } catch(e) { return callback(e, false); }
 };
 
