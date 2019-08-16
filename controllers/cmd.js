@@ -54,11 +54,12 @@ module.exports = app => {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
           user = new models.User({userId: message.from.username, chatId: (message.chat.id + ''), colors: defaultColors, state: 'newUser'}); 
-          user.generateKeyPair((e, privateKey, publicKey) => {
+          user.generateKeyPair((e, publicKey, privateKey) => {
             if (e) { throw new Error(e); }
             user.publicKey = publicKey;
             for (let i = 0; i<user.colors.length; i++) { // encrypt default moods
               user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
+                if (e) { throw new Error(e); }
                 user.colors[i].mood = encryptedMood;
               });
             }
