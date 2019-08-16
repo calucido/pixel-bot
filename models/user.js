@@ -27,11 +27,18 @@ userSchema.methods.generateKeyPair = callback => {
       type: 'pkcs8',
       format: 'pem'
     }
-  }, callback);
+  }, (e, publicKey, privateKey) => {
+    this.publicKey = publicKey;
+    this.save(e => {
+      if (e) { return callback(e, false, false); }
+      return callback(null, publicKey, privateKey);
+    });
+  });
 };
 
 userSchema.methods.encrypt = (data, callback) => {
   try {
+    console.log(this.publicKey)
     return callback(null, crypto.publicEncrypt(this.publicKey, Buffer.from(data)));
   } catch(e) { return callback(e, false); }
 };
