@@ -38,7 +38,8 @@ module.exports = app => {
 
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
-          models.Year.findOne({username: message.from.username, year: Number(user.state.yearDate), yearType: user.state.yearType}).then(year => {
+          const year = user.state.yearDat;
+          models.Year.findOne({username: message.from.username, year, yearType: user.state.yearType}).then(year => {
             // don't check for !year because it must exist in order for user.state.intent = 'year'
             let colorMap = {};
             user.colors.forEach(color => {
@@ -48,8 +49,8 @@ module.exports = app => {
               for (let month = 0; month < year.content.length; month++) {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') { 
-                    image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
-                      user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => { // save to use arrow function because i want this to be scoped to image.scan
+                    user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => {
+                       image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor; no arrow function because "this" must be scoped to image.scan
                         if (e) { throw new Error(e); }
                         this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor.toString()]), offset, true);
                       });
@@ -62,7 +63,7 @@ module.exports = app => {
                     user.markModified('state');
                     user.save(e => {
                       if (e) { throw new Error(e); }
-                      return sendPhoto(message.chat.id, `Pixel graph for ${user.state.yearDate}.`, data, handleError);
+                      return sendPhoto(message.chat.id, `Pixel graph for ${year}.`, data, handleError);
                     });
                   });
                 }
