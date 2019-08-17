@@ -29,8 +29,46 @@ module.exports = app => {
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
             if (e) { throw new Error(e); }
             user.state = '';
+            user.markModified('state');
             user.save(handleError);
           });
+        });
+
+      } else if (user && user.state && user.state.intent === 'year') {
+
+        downloadFile(message.document.file_id, (e, privateKey) => {
+          if (e) { throw new Error(e); }
+          models.Year.findOne({username: message.from.username, year: Number(user.state.yearDate), yearType: user.state.yearType}).then(year => {
+            // don't check for !year because it must exist in order for user.state.intent = 'year'
+            let colorMap = {};
+            user.colors.forEach(color => {
+              colorMap[color.name] = color.hex;
+            });
+            Jimp.read('year.png', (e, image) => {
+              for (let month = 0; month < year.content.length; month++) {
+                for (let day = 0; day < year.content[month].length; day++) {
+                  if (year.content[month][day] !== '') { 
+                    image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
+                      user.decrypt(privateKey, year.content[month][day], (e, decryptedColor) => { // save to use arrow function because i want this to be scoped to image.scan
+                        if (e) { throw new Error(e); }
+                        this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor]), offset, true);
+                      });
+                    });
+                  }
+                }
+                if (month === (year.content.length - 1)) { 
+                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                    user.state = '';
+                    user.markModified('state');
+                    user.save(e => {
+                      if (e) { throw new Error(e); }
+                      return sendPhoto(message.chat.id, `Pixel graph for ${user.state.yearDate}.`, data, handleError);
+                    });
+                  });
+                }
+              }
+            });
+          }).catch(handleError);
         });
 
       } else if (message.text.match(/^\/start/)) {
@@ -122,6 +160,7 @@ module.exports = app => {
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
 
         user.state = 'colors';
+        user.markModified('state');
         user.save(e => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, 'Please send me your private key file. (It\'s the one I sent you when you signed up!)', handleError);
@@ -169,7 +208,6 @@ module.exports = app => {
 
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
 
-// TODO decrypt each day. messes with plan for /colors
         let requestedYear = message.text.match(/\d{4}/);
         let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
@@ -182,25 +220,14 @@ module.exports = app => {
             if (!year) {
               return send(message.chat.id, `I couldn't find ${requestedYear} ${requestedYearType}.`, handleError);
             }
-            let colorMap = {};
-            user.colors.forEach(color => {
-              colorMap[color.name] = color.hex;
-            });
-            Jimp.read('year.png', (e, image) => {
-              for (let month = 0; month < year.content.length; month++) {
-                for (let day = 0; day < year.content[month].length; day++) {
-                  if (year.content[month][day] !== '') {
-                    image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
-                      this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[year.content[month][day]]), offset, true);
-                    });
-                  }
-                }
-                if (month === (year.content.length - 1)) {
-                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    return sendPhoto(message.chat.id, `Pixel graph for ${requestedYear}.`, data, handleError);
-                  });
-                }
-              }
+            user.state = {};
+            user.state.intent = 'year';
+            user.state.yearType = requestedYearType;
+            user.state.yearDate = requestedYear;
+            user.markModified('state');
+            user.save(e => {
+              if (e) { throw new Error(e); }
+              return send(message.chat.id, 'Please send me your private key file. (It\'s the one I sent you when you signed up!)', handleError);
             });
           }).catch(handleError);
         }
@@ -214,6 +241,7 @@ module.exports = app => {
         user.timezone = timezone;
         if (user.state === 'newUser') { // messy but I don't want to give the user extra instructions before the timezone is set
           user.state = '';
+          user.markModified('state');
           setTimeout(() => {return send(message.chat.id, `Thanks for taking care of that. I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 1000);
           setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 2000);
         } 
