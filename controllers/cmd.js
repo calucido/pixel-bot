@@ -208,7 +208,7 @@ module.exports = app => {
 
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
 
-        let requestedYear = message.text.match(/\d{4}/);
+        let requestedYear = message.text.match(/\d{4}/)[0];
         let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
           return send(message.chat.id, "You need to tell me what year you want to see.", handleError);
