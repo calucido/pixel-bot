@@ -38,8 +38,8 @@ module.exports = app => {
 
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
-          const year = user.state.yearDat;
-          models.Year.findOne({username: message.from.username, year, yearType: user.state.yearType}).then(year => {
+          const yearDate = user.state.yearDate;
+          models.Year.findOne({username: message.from.username, year: yearDate, yearType: user.state.yearType}).then(year => {
             // don't check for !year because it must exist in order for user.state.intent = 'year'
             let colorMap = {};
             user.colors.forEach(color => {
@@ -63,7 +63,7 @@ module.exports = app => {
                     user.markModified('state');
                     user.save(e => {
                       if (e) { throw new Error(e); }
-                      return sendPhoto(message.chat.id, `Pixel graph for ${year}.`, data, handleError);
+                      return sendPhoto(message.chat.id, `Pixel graph for ${yearDate}.`, data, handleError);
                     });
                   });
                 }
