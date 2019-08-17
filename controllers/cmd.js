@@ -10,7 +10,7 @@ module.exports = app => {
     const message = req.body.message;
     
     models.User.findOne({username: message.from.username}).then((user) => {
-      if (user.state === 'colors') {
+      if (user && user.state === 'colors') {
         if (!message.document) {
           return send(message.chat.id, 'Please send me the private key I sent you way back when you signed up.', handleError);
         }
