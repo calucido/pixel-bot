@@ -50,7 +50,7 @@ module.exports = app => {
             }
             user.save(e => {
               if (e) { throw new Error(e); }
-              send(message.chat.id, `Hi there! Very important notice: this file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.`, handleError);
+              send(message.chat.id, `Hi there! Very important notice: this file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year. Hint: keep it in your Saved Messages, and just forward it to me whenever you need it.`, handleError);
               sendKey(message.chat.id, privateKey, handleError);
               return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
             });
