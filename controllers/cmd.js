@@ -10,10 +10,13 @@ module.exports = app => {
     const message = req.body.message;
     
     models.User.findOne({username: message.from.username}).then((user) => {
+
       if (user && user.state === 'colors') {
+
         if (!message.document) {
           return send(message.chat.id, 'Please send me the private key I sent you way back when you signed up.', handleError);
         }
+
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
           let colors = '';
@@ -29,7 +32,9 @@ module.exports = app => {
             user.save(handleError);
           });
         });
+
       } else if (message.text.match(/^\/start/)) {
+
         if (user) {
           return send(message.chat.id, "I already know you!", handleError);
         } else {
@@ -50,7 +55,9 @@ module.exports = app => {
             });
           });
         }
+
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
+
         let yearType = message.text.match(/^\/(am|pm)/i)[1].toLowerCase(); // safe to use .toLowerCase() immediately because the string for sure exists otherwise the preceding match would have failed
         if (!user.timezone) {
           return send(message.chat.id, "What timezone are you in? (e.g. US/Eastern)", handleError);
@@ -110,16 +117,24 @@ module.exports = app => {
             });
           }
         }).catch(e => {throw new Error(e)});
+
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
+
         user.state = 'colors';
         user.save(e => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, 'Please send me your private key file. (It\'s the one I sent you when you signed up!)', handleError);
         });
+
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
+
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
+        if (colorName.length > 117) { return send(message.chat.id, 'Keep your color name under 117 characters!', handleError); } 
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
+        if (colorMood.length > 117) { return send(message.chat.id, 'Keep your mood under 117 characters!', handleError); }
+        // using 4096 bit RSA, the max amount of data that can be encrypted is (4096/8) - 42 = 117.5 bytes, which == 117.5 Unicode characters in UTF-32 encoding
+
         if (!colorHex) {
           return send(message.chat.id, "That isn't a valid hex color. Be sure to format it like #ff0000.", handleError);
         } else if (!colorName || !colorMood) {
@@ -134,7 +149,9 @@ module.exports = app => {
             });
           });
         }
+
       } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
+
         let colorName = message.text.replace(/^\/delete +/i, '');
         let colorIndex = user.colors.map(color => {return color.name}).indexOf(colorName);
         if (colorIndex === -1) {
@@ -148,7 +165,9 @@ module.exports = app => {
             return send(message.chat.id, "Deleted!", handleError);
           });
         }
+
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
+
 // TODO decrypt each day. messes with plan for /colors
         let requestedYear = message.text.match(/\d{4}/);
         let requestedYearType = message.text.match(/(am|pm)$/i);
@@ -184,7 +203,9 @@ module.exports = app => {
             });
           }).catch(handleError);
         }
+
       } else if (message.text.match(/^\/timezone/i)) {
+
         let timezone = message.text.replace(/^\/timezone +/i, '');
         if (!moment.tz.zone(timezone)) {
          return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
@@ -199,10 +220,15 @@ module.exports = app => {
           if (e) { throw new Error(e); }
           return send(message.chat.id, `Set your timezone to ${user.timezone}.`, handleError);
         });
+
       } else if (message.text.match(/^\/help/i)) { // send list of commands
+
         return send(message.chat.id, `/am - Set the am mood.\n/pm - Set the pm mood.\n/color - Define a new color (usage: /color name #hex "mood")\n/year - See a graph of the year (usage: /year #### am)\n/colors - See a list of your defined colors.\n/timezone - Set your timezone.`, handleError);
+
       } else { // I have no idea what you're saying
+
         return send(message.chat.id, "What does that mean? Say /help to see what I can do.", handleError);
+
       }
     }).catch(e => {throw new Error(e);});
   });
