@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     mood: Buffer,
     used: Boolean}
   ],
-  publicKey: String,
+  publicKey: Buffer,
   state: {}
 });
 
