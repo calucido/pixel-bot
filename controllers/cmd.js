@@ -38,7 +38,6 @@ module.exports = app => {
 
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
-          const yearDate = user.state.yearDate;
           models.Year.findOne({username: message.from.username, year: yearDate, yearType: user.state.yearType}).then(year => {
             // don't check for !year because it must exist in order for user.state.intent = 'year'
             let colorMap = {};
@@ -59,11 +58,12 @@ module.exports = app => {
                 }
                 if (month === (year.content.length - 1)) { 
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                    const message = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
                     user.state = '';
                     user.markModified('state');
                     user.save(e => {
                       if (e) { throw new Error(e); }
-                      return sendPhoto(message.chat.id, `Pixel graph for ${yearDate}.`, data, handleError);
+                      return sendPhoto(message.chat.id, message, data, handleError);
                     });
                   });
                 }
