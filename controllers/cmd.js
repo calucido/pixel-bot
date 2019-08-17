@@ -2,7 +2,7 @@
 const moment = require('moment-timezone')
     , Jimp = require('jimp')
     , models = require('../models')
-    , {defaultColors, downloadFile, handleError, send, sendPhoto} = require('../lib/common');
+    , {defaultColors, downloadFile, handleError, send, sendKey, sendPhoto} = require('../lib/common');
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
@@ -50,7 +50,8 @@ module.exports = app => {
             }
             user.save(e => {
               if (e) { throw new Error(e); }
-              send(message.chat.id, `Hi there! Very important notice: this picture is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.\n${privateKey}`, handleError);
+              send(message.chat.id, `Hi there! Very important notice: this file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year.`, handleError);
+              sendKey(message.chat.id, privateKey, handleError);
               return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
             });
           });
