@@ -114,10 +114,9 @@ module.exports = app => {
         user.state = 'colors';
         user.save(e => {
           if (e) { throw new Error(e); }
-          return send(message.chat.id, 'Please send me your private key as an image. (It\'s the one I sent you when you signed up!)', handleError);
+          return send(message.chat.id, 'Please send me your private key file. (It\'s the one I sent you when you signed up!)', handleError);
         });
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
-// TODO encrypt mood when adding a new color
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
@@ -127,11 +126,12 @@ module.exports = app => {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
           colorName = colorName.toLowerCase();
-          colorMood = colorMood.toLowerCase();
-          user.colors.push({name: colorName, hex: colorHex, mood: colorMood, used: false});
-          user.save(e => {
-            if (e) { throw new Error(e); }
-            return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood}. Say /colors to see all of them.`, handleError);
+          user.encrypt(colorMood.toLowerCase(), (e, encryptedMood) => {
+            user.colors.push({name: colorName, hex: colorHex, mood: encryptedMood, used: false});
+            user.save(e => {
+              if (e) { throw new Error(e); }
+              return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood.toLowerCase()}. Say /colors to see all of them.`, handleError);
+            });
           });
         }
       } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
@@ -190,10 +190,10 @@ module.exports = app => {
          return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
         }
         user.timezone = timezone;
-        if (user.state === 'newUser') {
+        if (user.state === 'newUser') { // messy but I don't want to give the user extra instructions before the timezone is set
           user.state = '';
-          setTimeout(() => {return send(message.chat.id, `Thanks for taking care of that. I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 3000);
-          setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 5000);
+          setTimeout(() => {return send(message.chat.id, `Thanks for taking care of that. I've set you up with some default colors. You can always add more! To see the defaults, say /colors`, handleError);}, 1000);
+          setTimeout(() => {return send(message.chat.id, 'You can set your mood for the morning by saying /am "color", and the evening by saying /pm "color"', handleError);}, 2000);
         } 
         user.save(e => {
           if (e) { throw new Error(e); }
