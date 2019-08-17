@@ -49,9 +49,9 @@ module.exports = app => {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') { 
                     image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor;
-                      user.decrypt(privateKey, year.content[month][day], (e, decryptedColor) => { // save to use arrow function because i want this to be scoped to image.scan
+                      user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => { // save to use arrow function because i want this to be scoped to image.scan
                         if (e) { throw new Error(e); }
-                        this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor]), offset, true);
+                        this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor.toString()]), offset, true);
                       });
                     });
                   }
