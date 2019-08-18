@@ -8,7 +8,7 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     res.sendStatus(200);
     const message = req.body.message;
-    
+     
     models.User.findOne({username: message.from.username}).then((user) => {
 
       if (user && user.state === 'colors') {
@@ -22,7 +22,13 @@ module.exports = app => {
           let colors = '';
           user.colors.forEach(color => {
             user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
-              if (e) { throw new Error(e); }
+              if (e) {
+                if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
+                  return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                } else {
+                  throw new Error(e);
+                }
+              }
               colors += `${color.name} (${color.hex}): ${decryptedMood.toString()}\n`
             });
           });
@@ -35,6 +41,10 @@ module.exports = app => {
         });
 
       } else if (user && user.state && user.state.intent === 'year') {
+
+        if (!message.document) {
+          return send(message.chat.id, 'Please send me the private key I sent you way back when you signed up.', handleError);
+        }
 
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
@@ -49,8 +59,15 @@ module.exports = app => {
                 for (let day = 0; day < year.content[month].length; day++) {
                   if (year.content[month][day] !== '') { 
                     user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => {
-                       image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor; no arrow function because "this" must be scoped to image.scan
-                        if (e) { throw new Error(e); }
+                      if (e) {
+                        if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
+                          return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                        } else {
+                          throw new Error(e);
+                        }
+                      }
+
+                      image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor; no arrow function because "this" must be scoped to image.scan
                         this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor.toString()]), offset, true);
                       });
                     });
@@ -58,6 +75,7 @@ module.exports = app => {
                 }
                 if (month === (year.content.length - 1)) { 
                   image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                    if (e) { throw new Error(e); }
                     const message = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
                     user.state = '';
                     user.markModified('state');
@@ -98,10 +116,12 @@ module.exports = app => {
 
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
 
-        let yearType = message.text.match(/^\/(am|pm)/i)[1].toLowerCase(); // safe to use .toLowerCase() immediately because the string for sure exists otherwise the preceding match would have failed
         if (!user.timezone) {
-          return send(message.chat.id, "What timezone are you in? (e.g. US/Eastern)", handleError);
+          return send(message.chat.id, "What timezone are you in? (e.g. /timezone US/Eastern)", handleError);
         }
+
+        let yearType = message.text.match(/^\/(am|pm)/i)[1].toLowerCase(); // safe to use [1].toLowerCase() immediately because the string for sure exists otherwise the "else if" match would have failed
+        
         let currentYear = moment.tz(user.timezone).format('YYYY');
         let currentMonth = Number(moment.tz(user.timezone).format('MM'));
         let currentDay = Number(moment.tz(user.timezone).format('DD'));
@@ -136,26 +156,24 @@ module.exports = app => {
             user.save(handleError);
           }
 
-          if (year.content[currentMonth - 1][currentDay - 1]) {
-            user.encrypt(color, (e, encryptedColor) => {
+          user.encrypt(color, (e, encryptedColor) => {
+            if (e) { throw new Error(e); }
+            if (year.content[currentMonth - 1][currentDay - 1]) {
               year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
               year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
-            
               year.save(e => {
                 if (e) { throw new Error(e); }
                 return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
               });
-            });
-          } else {
-            user.encrypt(color, (e, encryptedColor) => {
+            } else {
               year.content[currentMonth - 1].push(encryptedColor);
               year.markModified('content');  // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
               year.save(e => {
                 if (e) { throw new Error(e); }
                 return send(message.chat.id, `Added ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
               });
-            });
-          }
+            }
+          });
         }).catch(e => {throw new Error(e)});
 
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
@@ -170,10 +188,9 @@ module.exports = app => {
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
 
         let colorName = message.text.match(/^\/color +"?([^"]+)"? +#/i)[1];
-        if (colorName.length > 117) { return send(message.chat.id, 'Keep your color name under 117 characters!', handleError); } 
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/)[1];
         let colorMood = message.text.match(/^\/color +"?.+"? +#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?([^"]+)"?$/i)[1];
-        if (colorMood.length > 117) { return send(message.chat.id, 'Keep your mood under 117 characters!', handleError); }
+
         // using 4096 bit RSA, the max amount of data that can be encrypted is (4096/8) - 42 = 117.5 bytes, which == 117.5 Unicode characters in UTF-32 encoding
 
         if (!colorHex) {
@@ -181,12 +198,16 @@ module.exports = app => {
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
-          colorName = colorName.toLowerCase();
-          user.encrypt(colorMood.toLowerCase(), (e, encryptedMood) => {
+          colorName = colorName[1].toLowerCase();
+          colorHex = colorHex[1]; // Jimp takes any capitalization of hex colors
+          colorMood = colorMood[1].toLowerCase();
+          if (colorName.length > 117) { return send(message.chat.id, 'Keep your color name under 117 characters!', handleError); } 
+          if (colorMood.length > 117) { return send(message.chat.id, 'Keep your mood under 117 characters!', handleError); }
+          user.encrypt(colorMood, (e, encryptedMood) => {
             user.colors.push({name: colorName, hex: colorHex, mood: encryptedMood, used: false});
             user.save(e => {
               if (e) { throw new Error(e); }
-              return send(message.chat.id, `Added color ${colorName} (${colorHex}) meaning ${colorMood.toLowerCase()}. Say /colors to see all of them.`, handleError);
+              return send(message.chat.id, `Added color "${colorName}" (${colorHex}) meaning "${colorMood}". Say /colors to see all of them.`, handleError);
             });
           });
         }
@@ -209,13 +230,14 @@ module.exports = app => {
 
       } else if (message.text.match(/^\/year/i)) { // respond to requests to see a graph of the year
 
-        let requestedYear = message.text.match(/\d{4}/)[0];
+        let requestedYear = message.text.match(/\d{4}/);
         let requestedYearType = message.text.match(/(am|pm)$/i);
         if (!requestedYear) {
           return send(message.chat.id, "You need to tell me what year you want to see.", handleError);
         } else if (!requestedYearType) {
           return send(message.chat.id, "You need to tell me what part of the year you want to see (am/pm).", handleError);
         } else {
+          requestedYear = requestedYear[0];
           requestedYearType = requestedYearType[1].toLowerCase();
           models.Year.findOne({username: message.from.username, year: Number(requestedYear), yearType: requestedYearType}).then(year => {
             if (!year) {
