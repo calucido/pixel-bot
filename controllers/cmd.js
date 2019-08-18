@@ -259,7 +259,7 @@ module.exports = app => {
 
         let timezone = message.text.replace(/^\/timezone +/i, '');
         if (!moment.tz.zone(timezone)) {
-         return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
+         return send(message.chat.id, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
         }
         user.timezone = timezone;
         if (user.state === 'newUser') { // messy but I don't want to give the user extra instructions before the timezone is set
