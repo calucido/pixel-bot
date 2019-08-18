@@ -52,7 +52,7 @@ module.exports = app => {
 
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
-          models.Year.findOne({username: message.from.username, year: yearDate, yearType: user.state.yearType}).then(year => {
+          models.Year.findOne({username: message.from.username, year: user.state.yearDate, yearType: user.state.yearType}).then(year => {
             // don't check for !year because it must exist in order for user.state.intent = 'year'
             let colorMap = {};
             user.colors.forEach(color => {
