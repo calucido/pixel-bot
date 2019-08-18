@@ -148,6 +148,7 @@ module.exports = app => {
     
           // check whether today's mood has already been defined, and then set
           let color = message.text.replace(/^\/am +|^\/pm +/i, '');
+          color = color.replace(/"/g, '');
           let colorIndex = () => {
             return user.colors.findIndex(obj => {return obj.name === color.toLowerCase();});
           };
