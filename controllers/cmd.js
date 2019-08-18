@@ -33,7 +33,7 @@ module.exports = app => {
                 throw new Error(e);
               }
             }
-          });
+          };
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
             if (e) { throw new Error(e); }
             user.state = '';
