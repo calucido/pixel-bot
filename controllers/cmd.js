@@ -62,7 +62,8 @@ module.exports = app => {
                     user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => {
                       if (e) {
                         if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
-                          return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                          send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                          break;
                         } else {
                           throw new Error(e);
                         }
