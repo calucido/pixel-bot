@@ -266,8 +266,8 @@ module.exports = app => {
       } else if (message.text.match(/^\/timezone/i)) {
 
         let timezone = message.text.replace(/^\/timezone +/i, '');
-        if (!moment.tz.zone(timezone)) {
-         return send(message.chat.id, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
+        if (!timezone || !moment.tz.zone(timezone)) {
+         return send(message.chat.it, "I don't recognize that timezone. Make sure to use the boring, technical name, like \"US/Eastern\".", handleError);
         }
         user.timezone = timezone;
         if (user.state === 'newUser') { // messy but I don't want to give the user extra instructions before the timezone is set
@@ -297,6 +297,7 @@ module.exports = app => {
           user.state = '';
           user.save(handleError);
         }
+        send(process.env.ADMIN_TELEGRAM_ID, `Something broke:\n${e}`, handleError);
         throw new Error(e);
       }
     }).catch(e => {throw new Error(e);});
