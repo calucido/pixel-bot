@@ -21,17 +21,18 @@ module.exports = app => {
           if (e) { throw new Error(e); }
           let colors = '';
           for (let i=0; i< user.colors.length; i++) {
-            user.decrypt(privateKey, user.colors[i].mood, (e, decryptedMood) => {
-              if (e) {
-                if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
-                  send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
-                  break;
-                } else {
-                  throw new Error(e);
-                }
+            try {
+              user.decrypt(privateKey, user.colors[i].mood, (e, decryptedMood) => {
+                if (e) { throw new Error(e) }
+                colors += `${user.colors[i].name} (${user.colors[i].hex}): ${decryptedMood.toString()}\n`
+              });
+            } catch(e) {
+              if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
+                return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+              } else {
+                throw new Error(e);
               }
-              colors += `${user.colors[i].name} (${user.colors[i].hex}): ${decryptedMood.toString()}\n`
-            });
+            }
           });
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
             if (e) { throw new Error(e); }
@@ -56,36 +57,37 @@ module.exports = app => {
               colorMap[color.name] = color.hex;
             });
             Jimp.read('year.png', (e, image) => {
-              for (let month = 0; month < year.content.length; month++) {
-                for (let day = 0; day < year.content[month].length; day++) {
-                  if (year.content[month][day] !== '') { 
-                    user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => {
-                      if (e) {
-                        if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
-                          send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
-                          break;
-                        } else {
-                          throw new Error(e);
-                        }
-                      }
-
-                      image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor; no arrow function because "this" must be scoped to image.scan
-                        this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor.toString()]), offset, true);
+              if (e) { throw new Error(e); }
+              try {
+                for (let month = 0; month < year.content.length; month++) {
+                  for (let day = 0; day < year.content[month].length; day++) {
+                    if (year.content[month][day] !== '') { 
+                      user.decrypt(privateKey, year.content[month][day].buffer, (e, decryptedColor) => {
+                        if (e) { throw new Error(e); }
+                        image.scan((month+1)*84, (day+1)*84, 82, 82, function(x, y, offset) { // 1092 = (12+1)*84; 2688 = (31+1)*84; *84 is for scaling factor; no arrow function because "this" must be scoped to image.scan
+                          this.bitmap.data.writeUInt32BE(Jimp.cssColorToHex(colorMap[decryptedColor.toString()]), offset, true);
+                        });
+                      });
+                    }
+                  }
+                  if (month === (year.content.length - 1)) { 
+                    image.getBuffer(Jimp.MIME_PNG, (e, data) => {
+                      if (e) { throw new Error(e); }
+                      const message = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
+                      user.state = '';
+                      user.markModified('state');
+                      user.save(e => {
+                        if (e) { throw new Error(e); }
+                        return sendPhoto(message.chat.id, message, data, handleError);
                       });
                     });
                   }
                 }
-                if (month === (year.content.length - 1)) { 
-                  image.getBuffer(Jimp.MIME_PNG, (e, data) => {
-                    if (e) { throw new Error(e); }
-                    const message = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
-                    user.state = '';
-                    user.markModified('state');
-                    user.save(e => {
-                      if (e) { throw new Error(e); }
-                      return sendPhoto(message.chat.id, message, data, handleError);
-                    });
-                  });
+              } catch(e) {
+                if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
+                  send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                } else {
+                  throw new Error(e);
                 }
               }
             });
