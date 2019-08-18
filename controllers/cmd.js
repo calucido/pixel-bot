@@ -27,7 +27,7 @@ module.exports = app => {
                 colors += `${user.colors[i].name} (${user.colors[i].hex}): ${decryptedMood.toString()}\n`
               });
             } catch(e) {
-              if (e.message.match(/04099079/) {
+              if (e.message.match(/04099079/)) {
                 return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
               } else {
                 throw new Error(e);
@@ -84,7 +84,7 @@ module.exports = app => {
                   }
                 }
               } catch(e) {
-                if (e.message.match(/04099079/) {
+                if (e.message.match(/04099079/)) {
                   send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
                 } else {
                   throw new Error(e);
