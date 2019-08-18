@@ -20,16 +20,17 @@ module.exports = app => {
         downloadFile(message.document.file_id, (e, privateKey) => {
           if (e) { throw new Error(e); }
           let colors = '';
-          user.colors.forEach(color => {
-            user.decrypt(privateKey, color.mood, (e, decryptedMood) => {
+          for (let i=0; i< user.colors.length; i++) {
+            user.decrypt(privateKey, user.colors[i].mood, (e, decryptedMood) => {
               if (e) {
                 if (e.message === 'error:04099079:rsa routines:RSA_padding_check_PKCS1_OAEP_mgf1:oaep decoding error') {
-                  return send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                  send(message.chat.id, "That key can't decrypt your data. If you think you've lost your key, look for it in the Documents tab of Shared Media.", handleError);
+                  break;
                 } else {
                   throw new Error(e);
                 }
               }
-              colors += `${color.name} (${color.hex}): ${decryptedMood.toString()}\n`
+              colors += `${user.colors[i].name} (${user.colors[i].hex}): ${decryptedMood.toString()}\n`
             });
           });
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
