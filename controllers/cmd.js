@@ -75,7 +75,7 @@ module.exports = app => {
                   if (month === (year.content.length - 1)) { 
                     image.getBuffer(Jimp.MIME_PNG, (e, data) => {
                       if (e) { throw new Error(e); }
-                      const reponse = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
+                      const response = `Pixel graph for ${user.state.yearDate} ${user.state.yearType}.`; // generate message while user.state is still meaningful
                       user.state = '';
                       user.markModified('state');
                       user.save(e => {
