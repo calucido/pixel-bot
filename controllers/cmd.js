@@ -6,10 +6,12 @@ const moment = require('moment-timezone')
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
-    res.sendStatus(200);
     const message = req.body.message;
-     
+
     models.User.findOne({username: message.from.username}).then((user) => {
+      res.sendStatus(200);
+
+      try {
 
       if (user && user.state === 'colors') {
 
@@ -285,6 +287,15 @@ module.exports = app => {
 
         return send(message.chat.id, "What does that mean? Say /help to see what I can do.", handleError);
 
+      }
+
+      } catch(e) {
+        send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError)
+        if (user && user.state) {
+          user.state = '';
+          user.save(handleError);
+        }
+        throw new Error(e);
       }
     }).catch(e => {throw new Error(e);});
   });
