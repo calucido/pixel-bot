@@ -222,7 +222,7 @@ module.exports = app => {
       } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
 
         let colorName = message.text.replace(/^\/delete +/i, '');
-        color = color.replace(/"/g, '');
+        colorName = colorName.replace(/"/g, '');
         let colorIndex = user.colors.map(color => {return color.name}).indexOf(colorName);
         if (colorIndex === -1) {
           return send(message.chat.id, "You haven't defined a color by that name.", handleError);
