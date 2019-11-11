@@ -136,7 +136,23 @@ module.exports = app => {
             send(message.chat.id, `Very important notice: this private key file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year. Hint: keep it in your Saved Messages, and just forward it to me whenever you need it.`, handleError);
             sendKey(message.chat.id, privateKey, handleError);
           });
-          models.Year.findOne({username: message.from.username, year: 2019, yearType: user.state.yearType}).then(year => { // hardcode year: 2019 because migration will not work after 2019
+          models.Year.findOne({username: message.from.username, year: 2019, yearType: 'am'}).then(year => { // hardcode year: 2019 because migration will not work after 2019
+            for (let month = 0; month < year.content.length; month++) {
+              for (let day = 0; day < year.content[month].length; day++) {
+                if (year.content[month][day] !== '') {
+                  user.encrypt(color, (e, encryptedColor) => {
+                    year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
+                    year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+                    year.save(e => {
+                      if (e) { throw new Error(e); }
+                      return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+                    });
+                  });
+                }
+              }
+            }
+          }).catch(handleError);
+          models.Year.findOne({username: message.from.username, year: 2019, yearType: 'pm'}).then(year => { // hardcode year: 2019 because migration will not work after 2019
             for (let month = 0; month < year.content.length; month++) {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
@@ -155,6 +171,7 @@ module.exports = app => {
               }
             }
           }).catch(handleError);
+
         });
 
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
