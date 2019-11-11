@@ -118,7 +118,8 @@ module.exports = app => {
               return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
             });
           });
-        }
+        };
+
       } else if (message.text.match(/^\/migrate/i)) { // migrate from unencrypted to encrypted
 
         user.generateKeyPair((e, publicKey, privateKey) => {
@@ -154,6 +155,7 @@ module.exports = app => {
               }
             }
           }).catch(handleError);
+        });
 
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
 
