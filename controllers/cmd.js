@@ -142,7 +142,7 @@ module.exports = app => {
             for (let month = 0; month < year.content.length; month++) {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
-                  user.encrypt(color, (e, encryptedColor) => {
+                  user.encrypt(year.content[month][day], (e, encryptedColor) => {
                     year.content[month][day] = encryptedColor;
                   });
                 }
@@ -159,7 +159,7 @@ module.exports = app => {
             for (let month = 0; month < year.content.length; month++) {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
-                  user.encrypt(color, (e, encryptedColor) => {
+                  user.encrypt(year.content[month][day], (e, encryptedColor) => {
                     year.content[month][day] = encryptedColor;
                   });
                 }
