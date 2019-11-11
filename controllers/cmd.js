@@ -141,13 +141,12 @@ module.exports = app => {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
                   user.encrypt(color, (e, encryptedColor) => {
-                    year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
-                    year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
-                    year.save(e => {
-                      if (e) { throw new Error(e); }
-                      return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
-                    });
+                    year.content[month][day] = encryptedColor;
                   });
+                }
+                if ((month === year.content.length - 1) && (day === year.content[month].length - 1)) {
+                  year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+                  year.save(catchError);
                 }
               }
             }
@@ -157,15 +156,14 @@ module.exports = app => {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
                   user.encrypt(color, (e, encryptedColor) => {
-                    year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
-                    year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
-                    year.save(e => {
-                      if (e) { throw new Error(e); }
-                      return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
-                    });
-                    if ((month === year.content.length - 1) && (day === year.content[month].length - 1)) {
-                      return send(message.chat.id, `Finished encrypting your year data.`, handleError);
-                    }
+                    year.content[month][day] = encryptedColor;
+                  });
+                }
+                if ((month === year.content.length - 1) && (day === year.content[month].length - 1)) {
+                  year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+                  year.save(e => {
+                    if (e) { throw new Error(e) }
+                    return send(message.chat.id, `Finished encrypting your year data.`, handleError);
                   });
                 }
               }
