@@ -136,7 +136,7 @@ module.exports = app => {
             send(message.chat.id, `Very important notice: this private key file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year. Hint: keep it in your Saved Messages, and just forward it to me whenever you need it.`, handleError);
             sendKey(message.chat.id, privateKey, handleError);
           });
-          models.Year.findOne({username: message.from.username, year: user.state.yearDate, yearType: user.state.yearType}).then(year => {
+          models.Year.findOne({username: message.from.username, year: 2019, yearType: user.state.yearType}).then(year => { // hardcode year: 2019 because migration will not work after 2019
             for (let month = 0; month < year.content.length; month++) {
               for (let day = 0; day < year.content[month].length; day++) {
                 if (year.content[month][day] !== '') {
