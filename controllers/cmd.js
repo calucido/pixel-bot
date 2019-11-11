@@ -119,6 +119,41 @@ module.exports = app => {
             });
           });
         }
+      } else if (message.text.match(/^\/migrate/i)) { // migrate from unencrypted to encrypted
+
+        user.generateKeyPair((e, publicKey, privateKey) => {
+          if (e) { throw new Error(e); }
+          user.publicKey = publicKey;
+          for (let i = 0; i<user.colors.length; i++) { // encrypt existing moods
+            user.encrypt(user.colors[i].mood, (e, encryptedMood) => {
+              if (e) { throw new Error(e); }
+              user.colors[i].mood = encryptedMood;
+            });
+          }
+          user.save(e => {
+            if (e) { throw new Error(e); }
+            send(message.chat.id, `Very important notice: this private key file is like your password, so keep it secret! But don't lose it, otherwise you won't be able to look at your year. Hint: keep it in your Saved Messages, and just forward it to me whenever you need it.`, handleError);
+            sendKey(message.chat.id, privateKey, handleError);
+          });
+          models.Year.findOne({username: message.from.username, year: user.state.yearDate, yearType: user.state.yearType}).then(year => {
+            for (let month = 0; month < year.content.length; month++) {
+              for (let day = 0; day < year.content[month].length; day++) {
+                if (year.content[month][day] !== '') {
+                  user.encrypt(color, (e, encryptedColor) => {
+                    year.content[currentMonth - 1][currentDay - 1] = encryptedColor;
+                    year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+                    year.save(e => {
+                      if (e) { throw new Error(e); }
+                      return send(message.chat.id, `Overwrote ${yearType} mood for ${moment.tz(user.timezone).format('YYYY-MM-DD')} as ${color}.`, handleError);
+                    });
+                    if ((month === year.content.length - 1) && (day === year.content[month].length - 1)) {
+                      return send(message.chat.id, `Finished encrypting your year data.`, handleError);
+                    }
+                  });
+                }
+              }
+            }
+          }).catch(handleError);
 
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
 
