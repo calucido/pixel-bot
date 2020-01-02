@@ -9,7 +9,7 @@ module.exports = app => {
     const message = req.body.message;
 
     if (message.edited_message) {
-      return send(message.edited_message.chat.id, `Editing messages doesn't work with this bot. Send the command again!` handleError);
+      return send(message.edited_message.chat.id, `Editing messages doesn't work with this bot. Send the command again!`, handleError);
     }
 
     console.log(req.body);
