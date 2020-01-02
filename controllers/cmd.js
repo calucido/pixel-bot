@@ -8,6 +8,10 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
 
+    if (message.edited_message) {
+      return send(message.edited_message.chat.id, `Editing messages doesn't work with this bot. Send the command again!` handleError);
+    }
+
     console.log(req.body);
 
     models.User.findOne({chatId: (message.chat.id + '')}).then((user) => {
