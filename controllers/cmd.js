@@ -8,6 +8,8 @@ module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
     const message = req.body.message;
 
+    console.log(req.body);
+
     models.User.findOne({chatId: (message.chat.id + '')}).then((user) => {
       res.sendStatus(200);
 
