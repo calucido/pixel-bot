@@ -9,6 +9,7 @@ module.exports = app => {
     const message = req.body.message;
 
     if (req.body.edited_message) {
+      res.sendStatus(200);
       return send(req.body.edited_message.chat.id, `Editing messages doesn't work with this bot. Send the command again!`, handleError);
     }
 
@@ -318,6 +319,12 @@ module.exports = app => {
         send(process.env.ADMIN_TELEGRAM_ID, `Something broke:\n${e}`, handleError);
         throw new Error(e);
       }
-    }).catch(e => {throw new Error(e);});
+    }).catch(e => {
+      if (e.message.match(/bot was blocked by the user/) {
+        res.sendStatus(200);
+      } else {
+        throw new Error(e);
+      }
+    });
   });
 };
