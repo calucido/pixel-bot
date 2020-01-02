@@ -6,12 +6,12 @@ const moment = require('moment-timezone')
 
 module.exports = app => {
   app.post(`/api/v0/cmd/${process.env.TELEGRAM_API_KEY}`, (req, res) => {
-    const message = req.body.message;
-
     if (req.body.edited_message) {
       res.sendStatus(200);
       return send(req.body.edited_message.chat.id, `Editing messages doesn't work with this bot. Send the command again!`, handleError);
     }
+
+    const message = req.body.message
 
     models.User.findOne({chatId: (message.chat.id + '')}).then((user) => {
       res.sendStatus(200);
@@ -311,9 +311,7 @@ module.exports = app => {
       }
 
       } catch(e) {
-        if (e.message.match(/bot was blocked by the user/)) {
-          res.sendStatus(200);
-        } else {
+        if (e.match(/bot was blocked by the user/) === null) { // ignore errors that arise from trying to send a message to a user that stopped the bot. line 17 prevents telegram servers from endlessly triggering webhook with messages from stopped users. there is no processing to do on this end, so acknowledge the request and do nothing with it. 
           send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError);
           if (user && user.state) {
             user.state = '';
