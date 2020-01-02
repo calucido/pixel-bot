@@ -9,7 +9,7 @@ db.once('open', () => {
   require('../models/user');
   models.User.find({}).then((users) => {
     for (let j = 0; j < users.length; j++) {
-      for (let i = 0; i < user.colors.length; i++) {
+      for (let i = 0; i < users[j].colors.length; i++) {
         users[j].colors[i].name = users[j].colors[i].name.replace('“', '').replace('”', '');
         if (i === (user.colors.length - 1)) { user.save(handleError); }
       }
