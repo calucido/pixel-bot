@@ -35,7 +35,7 @@ module.exports = app => {
                 throw new Error(e);
               }
             }
-          };
+          }
           return send(message.chat.id, `Your defined colors are:\n${colors}`, e => {
             if (e) { throw new Error(e); }
             user.state = '';
@@ -118,7 +118,7 @@ module.exports = app => {
               return setTimeout(() => {return send(message.chat.id, 'Before you do anything else, can you tell me your timezone?\nE.g.: /timezone US/Eastern', handleError)}, 1000);
             });
           });
-        };
+        }
 
       } else if (message.text.match(/^\/am|^\/pm/i)) { // see if it's a mood log "am" or "pm"
 
@@ -285,14 +285,28 @@ module.exports = app => {
 
         return send(message.chat.id, `/am - Set the am mood.\n/pm - Set the pm mood.\n/color - Define a new color (usage: /color name #hex "mood")\n/year - See a graph of the year (usage: /year #### am)\n/colors - See a list of your defined colors.\n/timezone - Set your timezone.`, handleError);
 
-      } else { // I have no idea what you're saying
+      } else if (message.text.match(/^\/migrate2/i)) { // migrate years from username to chatId
 
-        return send(message.chat.id, "What does that mean? Say /help to see what I can do.", handleError);
+        models.Year.find({username: message.from.username}).then(years => {
+          for (let i = 0; i < years.length; year++) {
+            years[i].chatId = message.chat.id;
+            years[i].save(e => {
+              if (e) { throw new Error(e) }
+              if (i === (years.length - 1)) {
+                return send(message.chat.id, `Finished upgrading.`, handleError);
+              }
+            });
+          }
+        }).catch(handleError);
+
+      }  else { // I have no idea what you're saying
+
+        return send(message.chat.id, "I don't understand that command. Say /help to see what I can do.", handleError);
 
       }
 
       } catch(e) {
-        send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError)
+        send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError);
         if (user && user.state) {
           user.state = '';
           user.save(handleError);
@@ -302,4 +316,4 @@ module.exports = app => {
       }
     }).catch(e => {throw new Error(e);});
   });
-}
+};
