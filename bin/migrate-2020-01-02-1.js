@@ -8,11 +8,12 @@ db.once('open', () => {
 //  console.log('open')
   require('../models/user');
   models.User.find({}).then((users) => {
-    for (let user of users) {
-      for (let color of user.colors) {
-        color.name = color.name.replace('“', '').replace('”', '');
-        user.save(handleError);
+    for (let j = 0; j < users.length; j++) {
+      for (let i = 0; i < user.colors.length; i++) {
+        users[j].colors[i].name = users[j].colors[i].name.replace('“', '').replace('”', '');
+        if (i === (user.colors.length - 1)) { user.save(handleError); }
       }
+      if (j === users.length - 1) { process.exit(); }
     }
   }).catch(e => {throw new Error(e)});
 });
