@@ -288,7 +288,7 @@ module.exports = app => {
       } else if (message.text.match(/^\/migrate2/i)) { // migrate years from username to chatId
 
         models.Year.find({username: message.from.username}).then(years => {
-          for (let i = 0; i < years.length; year++) {
+          for (let i = 0; i < years.length; i++) {
             years[i].chatId = message.chat.id;
             years[i].save(e => {
               if (e) { throw new Error(e) }
