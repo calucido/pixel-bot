@@ -311,20 +311,18 @@ module.exports = app => {
       }
 
       } catch(e) {
-        send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError);
-        if (user && user.state) {
-          user.state = '';
-          user.save(handleError);
+        if (e.message.match(/bot was blocked by the user/)) {
+          res.sendStatus(200);
+        } else {
+          send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError);
+          if (user && user.state) {
+            user.state = '';
+            user.save(handleError);
+          }
+          send(process.env.ADMIN_TELEGRAM_ID, `Something broke:\n${e}`, handleError);
+          throw new Error(e);
         }
-        send(process.env.ADMIN_TELEGRAM_ID, `Something broke:\n${e}`, handleError);
-        throw new Error(e);
       }
-    }).catch(e => {
-      if (e.message.match(/bot was blocked by the user/) {
-        res.sendStatus(200);
-      } else {
-        throw new Error(e);
-      }
-    });
+    }).catch(e => { throw new Error(e);});
   });
 };
