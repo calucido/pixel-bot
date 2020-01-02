@@ -2,7 +2,8 @@
 const mongoose = require('mongoose');
 
 const yearSchema = new mongoose.Schema({
-  username: {type: String, index: true},
+  username: String,
+  chatId: {type: String, index: true},
   timezone: String,
   year: {type: Number, index: true},
   yearType: String,
