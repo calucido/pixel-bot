@@ -199,9 +199,9 @@ module.exports = app => {
 
       } else if (message.text.match(/^\/color/i)) { // allow ppl to define colors
 
-        let colorName = message.text.match(/^^\/color +("|“|”)?([^"|“|”]+)("|“|”)? +#/i);
+        let colorName = message.text.match(/^\/color +("|“|”)?([^"|“|”]+)("|“|”)? +#/i);
         let colorHex = message.text.match(/(#[A-Fa-f0-9]{6}|#[A-Fa-f0-9]{3})/);
-        let colorMood = message.text.match(/^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?“?”?([^"|“|”]+)"?“?”?$/i);
+        let colorMood = message.text.match(/#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}) +"?“?”?([^"|“|”]+)"?“?”?$/i);
 
         // using 4096 bit RSA, the max amount of data that can be encrypted is (4096/8) - 42 = 117.5 bytes, which == 117.5 Unicode characters in UTF-32 encoding
 
