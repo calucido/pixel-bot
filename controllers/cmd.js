@@ -317,7 +317,7 @@ module.exports = app => {
       }
 
       } catch(e) {
-        if (e.match(/bot was blocked by the user/) === null) { // ignore errors that arise from trying to send a message to a user that stopped the bot. line 17 prevents telegram servers from endlessly triggering webhook with messages from stopped users. there is no processing to do on this end, so acknowledge the request and do nothing with it. 
+        if (!e.match || e.match(/bot was blocked by the user/) === null) { // ignore errors that arise from trying to send a message to a user that stopped the bot. line 17 prevents telegram servers from endlessly triggering webhook with messages from stopped users. there is no processing to do on this end, so acknowledge the request and do nothing with it. 
           send(message.chat.id, 'An error occurred while processing your request. Bug @calucido. If you were sending a key, you\'ll have to send the previous command again.', handleError);
           if (user && user.state) {
             user.state = '';
