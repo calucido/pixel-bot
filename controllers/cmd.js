@@ -211,7 +211,7 @@ module.exports = app => {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
 
-          colorName = colorName[1].toLowerCase();
+          colorName = colorName[2].toLowerCase();
 
           if (user.colors.find(color => { color.name === colorName })) {
             return send(message.chat.id, `You already have a color named ${colorName}. If you haven't used it yet, you can delete it by sending /delete ${colorName}.`, handleError);
