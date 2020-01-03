@@ -210,18 +210,24 @@ module.exports = app => {
         } else if (!colorName || !colorMood) {
           return send(message.chat.id, `Be sure to format the command like:\n/color "color name" #hex "mood"`, handleError);
         } else  {
+
           colorName = colorName[1].toLowerCase();
-          colorHex = colorHex[1]; // Jimp takes any capitalization of hex colors
-          colorMood = colorMood[1].toLowerCase();
-          if (colorName.length > 117) { return send(message.chat.id, 'Keep your color name under 117 characters!', handleError); } 
-          if (colorMood.length > 117) { return send(message.chat.id, 'Keep your mood under 117 characters!', handleError); }
-          user.encrypt(colorMood, (e, encryptedMood) => {
-            user.colors.push({name: colorName, hex: colorHex, mood: encryptedMood, used: false});
-            user.save(e => {
-              if (e) { throw new Error(e); }
-              return send(message.chat.id, `Added color "${colorName}" (${colorHex}) meaning "${colorMood}". Say /colors to see all of them.`, handleError);
+
+          if (user.colors.find(color => { color.name === colorName })) {
+            return send(message.chat.id, `You already have a color named ${colorName}. If you haven't used it yet, you can delete it by sending /delete ${colorName}.`, handleError);
+          } else {
+            colorHex = colorHex[1]; // Jimp takes any capitalization of hex colors
+            colorMood = colorMood[1].toLowerCase();
+            if (colorName.length > 117) { return send(message.chat.id, 'Keep your color name under 117 characters!', handleError); } 
+            if (colorMood.length > 117) { return send(message.chat.id, 'Keep your mood under 117 characters!', handleError); }
+            user.encrypt(colorMood, (e, encryptedMood) => {
+              user.colors.push({name: colorName, hex: colorHex, mood: encryptedMood, used: false});
+              user.save(e => {
+                if (e) { throw new Error(e); }
+                return send(message.chat.id, `Added color "${colorName}" (${colorHex}) meaning "${colorMood}". Say /colors to see all of them.`, handleError);
+              });
             });
-          });
+          }
         }
 
       } else if (message.text.match(/^\/delete/i)) { // users can delete colors they haven't used
