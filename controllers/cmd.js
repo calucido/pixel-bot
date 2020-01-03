@@ -213,7 +213,7 @@ module.exports = app => {
 
           colorName = colorName[2].toLowerCase();
 
-          if (user.colors.find(color => { color.name === colorName })) {
+          if (user.colors.findIndex(obj => {return obj.name === color.toLowerCase();}) !== -1 ) {
             return send(message.chat.id, `You already have a color named ${colorName}. If you haven't used it yet, you can delete it by sending /delete ${colorName}.`, handleError);
           } else {
             colorHex = colorHex[1]; // Jimp takes any capitalization of hex colors
