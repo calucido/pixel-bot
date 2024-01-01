@@ -3,8 +3,8 @@ FROM node:12
 # Create app directory
 WORKDIR /app
 
-# Install app dependencies
-COPY package-lock.json ./
+# Copy both package.json and package-lock.json
+COPY package*.json ./
 RUN npm ci
 
 # Bundle app source

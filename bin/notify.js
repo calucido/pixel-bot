@@ -14,7 +14,7 @@ const sendReminders = () => {
         });
       }, 35);
     }
-  }).catch(e => {throw new Error(e)});
+  }).catch(e => {console.log(e)});
 };
 
 module.exports = () => {
