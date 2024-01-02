@@ -188,6 +188,41 @@ module.exports = app => {
           });
         }).catch(e => {throw new Error(e)});
 
+      } else if (message.text.match(/^\/increment/i)) {
+
+        if (!user.timezone) {
+          return send(message.chat.id, "What timezone are you in? (e.g. /timezone US/Eastern)", handleError);
+        }
+
+        let yearType = message.text.match(/\/increment *(\w*)/)[1].toLowerCase(); // safe to use [1].toLowerCase() immediately because the string for sure exists otherwise the "else if" match would have failed
+
+        let currentYear = moment.tz(user.timezone).format('YYYY');
+        let currentMonth = Number(moment.tz(user.timezone).format('MM'));
+        let currentDay = Number(moment.tz(user.timezone).format('DD'));
+
+        models.Year.findOne({chatId: (message.chat.id + ''), year: currentYear, yearType}).then((year) => {
+          // correct missing year
+          if (!year) {
+            year = new models.Year({chatId: (message.chat.id + ''), username: message.from.username, year: currentYear, yearType});
+          }
+
+          // correct missed months/days
+          while (year.content.length < currentMonth) {
+            year.content.push([]);
+          }
+          while (year.content[currentMonth - 1].length < (currentDay)) { // June 21 is year.content[5][20]
+            year.content[currentMonth - 1].push(0);
+          }
+
+          year.content[currentMonth - 1][currentDay - 1]++;
+          year.markModified('content'); // content is a mixed type, so must ALWAYS mark it as modified in order to save any changes to it
+          year.save(e => {
+            if (e) { throw new Error(e); }
+            return send(message.chat.id, `Incremented ${yearType} on ${moment.tz(user.timezone).format('YYYY-MM-DD')} to ${year.content[currentMonth - 1][currentDay - 1]}.`, handleError);
+          });
+
+        });
+
       } else if (message.text.match(/^\/colors/i)) { // see if they're asking for their color list
 
         user.state = 'colors';
